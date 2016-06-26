@@ -1,2 +1,6 @@
 # iotivity-c
 Iotivity C SDK
+
+
+
+style guidelines: https://www.kernel.org/doc/Documentation/CodingStyle
