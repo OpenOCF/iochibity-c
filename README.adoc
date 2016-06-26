@@ -1,6 +1,37 @@
 # iotivity-c
 Iotivity C SDK
 
-
-
 style guidelines: https://www.kernel.org/doc/Documentation/CodingStyle
+
+== examples
+
+To compile and run the examples you need a working installation of the Iotivity dev kit.
+
+This may or may not work with the official repo available at
+https://www.iotivity.org/[iotivity.org].  It does work with
+https://github.com/iotk/iochibity[iochibity], which is a fork that
+supports Darwin and Java.
+
+Set envronment var IOTIVITY_HOME to the root of the dev kit, e.g.
+
+[source,sh]
+----
+export IOTIVITY_HOME=$HOME/iotivity
+----
+
+In the Makefile set HOST, ARCH, and STAGE as desired.
+
+Set the library path according to host.  Assuming IOTIVITY_HOME=~/iotivity:
+
+Linux:  set LD_LIBRARY_PATH to $(IOTIVITY_HOME)/out/$(HOST)/$(ARCH)/$(STAGE)
+
+Darwin: set DYLD_LIBRARY_PATH to $(IOTIVITY_HOME)/out/$(HOST)/$(ARCH)/$(STAGE)
+
+On OS X, do this in the shell, not the makefile. (?)
+
+For example, for the minimal example, to build just run `make`.  Then
+run the server: `./server -o 0`.  Then in another terminal run one of
+the examples that come with the official dev kit, such as
+`resource/examples/presenceclient` or
+`resource/examples/devicediscoveryclient`.  Be sure to run the server
+first, then the client.
