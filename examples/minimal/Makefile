@@ -119,6 +119,6 @@ client.o:  client.c client.h
 	$(CC) $(CFLAGS) $(CPATH) -c client.c
 
 clean:
-	$(RM) $(TARGET) *.o
+	$(RM) server client *.o
 
 .PHONY:  o a clean
