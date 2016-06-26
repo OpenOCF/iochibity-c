@@ -1,14 +1,17 @@
 # Makefile for building minimal C example
 
+# CAVEAT: this makefile is messy. do not be alarmed.
+
 #FIXME:  check IOTIVITY_HOME
 
+# HOST: darwin or linux
 HOST=darwin
+
+# ARCH: x86_64 or whatever
+ARCH=x86_64
+
+# STAGE: debug or release
 STAGE=release
-
-# == CHANGE THE SETTINGS BELOW TO SUIT YOUR ENVIRONMENT =======================
-
-# Your platform. See PLATS for possible values.
-PLAT= none
 
 CPPFLAGS = -O2 -Wall -Wextra $(SYSCFLAGS) $(MYCFLAGS) $(CPATH)
 CFLAGS   = -std=c11
@@ -31,37 +34,6 @@ MYLDFLAGS=
 MYLIBS=
 MYOBJS=
 
-# == END OF USER SETTINGS -- NO NEED TO CHANGE ANYTHING BELOW THIS LINE =======
-
-# IOTLIBPATH = [env.get('BUILD_DIR')])
-# IOTRPATH = [env.get('BUILD_DIR')])
-
-# IOTLIBS = -loc -loctbstack -loc_logger -lconnectivity_abstraction -lpthread
-
-IOT_LIBPATH=$(IOTIVITY_HOME)/out/$(HOST)/x86_64/$(STAGE)
-
-# IOT_LIBS = $(IOT_LIBPATH)/liboctbstack.a \
-# 	$(IOT_LIBPATH)/libc_common.a \
-# 	$(IOT_LIBPATH)/libcoap.a \
-# 	$(IOT_LIBPATH)/libocsrm.a \
-# 	$(IOT_LIBPATH)/libroutingmanager.a \
-# 	$(IOT_LIBPATH)/libconnectivity_abstraction.a \
-# 	-loctbstack \
-# 	-lpthread
-
-	# -loc \
-
-
-	# $(IOT_LIBPATH)/liboc_logger.dylib \
-	# $(IOT_LIBPATH)/liboc.dylib \
-
-IOT_LIBS = \
-	$(IOT_LIBPATH)/libconnectivity_abstraction.a \
-	-loc \
-	-loctbstack \
-	-loc_logger \
-	-lpthread
-
 # ifeq ($(SECURED), 1)
 #     IOTLIBS += "-ltinydtls -locprovision -locpmapi"
 # endif
@@ -78,8 +50,6 @@ IOT_LIBS = \
 
 # if target_os in ['darwin', 'ios']:
 # 	jni_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
-
-PLATS= aix bsd c89 freebsd generic linux darwin mingw posix solaris
 
 # if target_arch in ['x86']:
 # 	env.AppendUnique(CCFLAGS = ['-m32'])
@@ -118,34 +88,23 @@ IOT_HEADERS= -I. \
 	-I${IOTIVITY_HOME}/resource/csdk/security/provisioning/include/internal \
 	-I${IOTIVITY_HOME}/resource/csdk/security/include
 
-# CORE_O= server.o
+IOT_LIBPATH=$(IOTIVITY_HOME)/out/$(HOST)/$(ARCH)/$(STAGE)
 
-# # DEPS = server.h
+# IOT_LIBS = $(IOT_LIBPATH)/liboctbstack.a \
+# 	$(IOT_LIBPATH)/libc_common.a \
+# 	$(IOT_LIBPATH)/libcoap.a \
+# 	$(IOT_LIBPATH)/libocsrm.a \
+# 	$(IOT_LIBPATH)/libroutingmanager.a \
+# 	$(IOT_LIBPATH)/libconnectivity_abstraction.a \
+# 	-loctbstack \
+# 	-lpthread
 
-# # $(ODIR)/%.o: %.c $(DEPS)
-# # 	$(CC) -c -o $@ $< $(CFLAGS)
-
-# # Targets start here.
-# default: $(PLAT)
-
-# BASE_O= $(CORE_O)
-
-# all:	$(BASE_O)
-
-
-# service: $(CORE_O)
-# 	 g++ -o service
-# 	-rpath $(IOT_LIBPATH) \
-# 	-flat_namespace \
-# 	$(IOT_LIBS) \
-# 	-L$(IOT_LIBPATH) \
-# 	-L. \
-# 	$(CORE_O)
-
-# the build target executable:
-TARGET = server
-
-all: $(TARGET)
+IOT_LIBS = \
+	$(IOT_LIBPATH)/libconnectivity_abstraction.a \
+	-loc \
+	-loctbstack \
+	-loc_logger \
+	-lpthread
 
 server:  server.o button.o led.o
 	$(CC) -o server $(CFLAGS) -L. -L$(IOT_LIBPATH) button.o led.o server.o $(LDFLAGS)
@@ -153,13 +112,13 @@ server:  server.o button.o led.o
 server.o:  server.c server.h
 	$(CC) $(CFLAGS) $(CPATH) -c server.c
 
-# $(TARGET): $(TARGET).c
-# 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $(TARGET) $(TARGET).c
+client:  client.o
+	$(CC) -o client $(CFLAGS) -L. -L$(IOT_LIBPATH) client.o $(LDFLAGS)
+
+client.o:  client.c client.h
+	$(CC) $(CFLAGS) $(CPATH) -c client.c
 
 clean:
 	$(RM) $(TARGET) *.o
 
-# list targets that do not create files (but not all makes understand .PHONY)
-.PHONY: all $(PLATS) default o a clean depend echo none
-
-# (end of Makefile)
+.PHONY:  o a clean
