@@ -29,6 +29,9 @@ Darwin: set DYLD_LIBRARY_PATH to $(IOTIVITY_HOME)/out/$(HOST)/$(ARCH)/$(STAGE)
 
 On OS X, do this in the shell, not the makefile. (?)
 
+If you run into link problems on OS X use `install_name_tool`.  See
+also `$ man ld`, search for "install_name".
+
 For example, for the minimal example, to build just run `make`.  Then
 run the server: `./server -o 0`.  Then in another terminal run one of
 the examples that come with the official dev kit, such as
