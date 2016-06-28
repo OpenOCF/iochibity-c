@@ -4,8 +4,8 @@
 
 #FIXME:  check IOTIVITY_HOME
 
-HOST=darwin
-#HOST=linux
+#HOST=darwin
+HOST=linux
 
 ARCH=x86_64
 

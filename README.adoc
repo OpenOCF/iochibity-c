@@ -1,8 +1,6 @@
 # iotivity-c
 Iotivity C SDK
 
-style guidelines: https://www.kernel.org/doc/Documentation/CodingStyle
-
 == examples
 
 To compile and run the examples you need a working installation of the Iotivity dev kit.
@@ -18,6 +16,8 @@ Set envronment var IOTIVITY_HOME to the root of the dev kit, e.g.
 ----
 export IOTIVITY_HOME=$HOME/iotivity
 ----
+
+Source `source-me`.
 
 In the Makefile set HOST, ARCH, and STAGE as desired.
 
@@ -51,4 +51,8 @@ to see the links.
 
 == profiling
 
+
+=== misc
+
+style guidelines: https://www.kernel.org/doc/Documentation/CodingStyle
 
