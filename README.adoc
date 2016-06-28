@@ -38,3 +38,17 @@ the examples that come with the official dev kit, such as
 `resource/examples/presenceclient` or
 `resource/examples/devicediscoveryclient`.  Be sure to run the server
 first, then the client.
+
+== debugging
+
+==== OS X
+
+The standard debugger is http://lldb.llvm.org/[lldb], not GNU gdb.
+
+Also, it looks like lldb might ignore DYLD_LIBRARY_PATH, so you might
+have to use `install_name_tool` to fix up your links.  Use `otool -L`
+to see the links.
+
+== profiling
+
+

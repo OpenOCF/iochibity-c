@@ -58,7 +58,7 @@ OCDeviceInfo device_info =
     .deviceName = "minDeviceName",
     /* OCStringLL *types; */
     .specVersion = "minDeviceSpecVersion", /* device specification version */
-    .dataModelVersion = "minDeviceModleVersion"
+    .dataModelVersion = "minDeviceModelVersion"
   };
 
 /* const char *deviceUUID = "myDeviceUUID"; */
@@ -155,7 +155,7 @@ int main(int argc, char* argv[])
     }
 
     /* 3. register default device info */
-    OCResourcePayloadAddStringLL(&device_info.types, "oic.d.tv");
+    OCResourcePayloadAddStringLL(&device_info.types, "oic.wk.d");
     op_result = OCSetDeviceInfo(device_info);
     if (op_result != OC_STACK_OK) {
         printf("Device Registration failed!\n");
