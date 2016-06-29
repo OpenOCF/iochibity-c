@@ -8,7 +8,8 @@
 #ARCH=x86_64   # darwin
 
 HOST=linux
-ARCH=x86	# edison
+# edison:
+ARCH=x86
 
 # STAGE: debug or release
 STAGE=release
