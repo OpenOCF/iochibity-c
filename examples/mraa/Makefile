@@ -4,15 +4,20 @@
 
 #FIXME:  check IOTIVITY_HOME
 
-HOST=darwin
-#HOST=linux
+#HOST=darwin
+#ARCH=x86_64   # darwin
 
-ARCH=x86_64
+HOST=linux
+ARCH=x86	# edison
 
 # STAGE: debug or release
 STAGE=release
 
-CPPFLAGS = -g -m64 -fPIC -Wall -Werror=implicit-function-declaration -Werror=incompatible-pointer-types -Wextra -DTB_LOG $(SYSCFLAGS) $(MYCFLAGS) $(CPATH)
+
+# clang:  -m64 -Werror=incompatible-pointer-types
+
+CPPFLAGS = -g -fPIC -Wall -Werror=implicit-function-declaration -Wextra -DTB_LOG $(SYSCFLAGS) $(MYCFLAGS) $(CPATH)
+
 CFLAGS   = -std=c11 $(CPPFLAGS)
 CXXFLAGS   = -std=c++0x -stdlib=libstdc++ $(CPPFLAGS)
 CPATH    = $(IOT_HEADERS)
