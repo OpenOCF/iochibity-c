@@ -71,7 +71,7 @@ void close_pins()
     mraa_aio_close(light_aio);
 }
 
-inline float get_avg_temp_raw()
+float get_avg_temp_raw()
 {
     if (tmp_aio == NULL)
     {
