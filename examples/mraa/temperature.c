@@ -91,20 +91,29 @@ float get_avg_temp_raw()
 int read_temp_mraa()
 {
     setup_pins();
-    // Temperature calculation using simpilfy Steinhart-Hart equation
-    //
-    //          1/T = 1/T0 + 1/beta*ln (R/R0)
-    //
-    // where T0 = 25C room temp, R0 = 10000 ohms
-    //
-    float beta = 4090.0;            //the beta of the thermistor, magic number
-    float t_raw = get_avg_temp_raw();
-    float R = 1023.0/t_raw -1;      //
-    R = 10000.0/R;                  // 10K resistor divider circuit
 
-    float T1 = log(R/10000.0)/beta; // natural log
-    float T2 = T1 + 1.0/298.15;     // room temp 25C= 298.15K
-    float ret = 1.0/T2 - 273.0;
+    /* http://www.seeedstudio.com/wiki/Grove_-_Temperature_Sensor_V1.2 */
+    const int B=4275;                 // B value of the thermistor
+    const int R0 = 100000;            // R0 = 100k
+
+    int a = mraa_aio_read(tmp_aio);           // read the raw value
+
+    float R = 1023.0/((float)a)-1.0;
+    R = 100000.0*R;
+
+    float temperature=1.0/(log(R/100000.0)/B+1/298.15)-273.15;//convert to temperature via datasheet ;
+
+    printf("temperature = %f\n", temperature);
+
+    /* from the iotivity sample code: */
+    /* float beta = 4090.0;            //the beta of the thermistor, magic number */
+    /* float t_raw = get_avg_temp_raw(); */
+    /* float R = 1023.0/t_raw -1;      // */
+    /* R = 10000.0/R;                  // 10K resistor divider circuit */
+
+    /* float T1 = log(R/10000.0)/beta; // natural log */
+    /* float T2 = T1 + 1.0/298.15;     // room temp 25C= 298.15K */
+    /* float ret = 1.0/T2 - 273.0; */
 
     close_pins();
 
