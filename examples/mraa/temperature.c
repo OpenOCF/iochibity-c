@@ -88,7 +88,7 @@ float get_avg_temp_raw()
     return average;
 }
 
-int read_temp_mraa()
+double read_temp_mraa()
 {
     setup_pins();
 
@@ -117,7 +117,7 @@ int read_temp_mraa()
 
     close_pins();
 
-  return ret;
+    return (double)temperature;
 }
 
 OCRepPayload*
@@ -145,7 +145,7 @@ temperature_read(struct rsvp_temperature rsvp)
   }
 
   OCRepPayloadSetUri(payload, rsvp.uri);
-  OCRepPayloadSetPropInt(payload, "temperature", read_temp_mraa());
+  OCRepPayloadSetPropDouble(payload, "temperature", read_temp_mraa());
   OCRepPayloadSetPropInt(payload, "power", 27);
 
   return payload;
