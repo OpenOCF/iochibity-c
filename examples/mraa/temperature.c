@@ -24,6 +24,7 @@
 #include <getopt.h>
 #include <signal.h>
 #include <pthread.h>
+#include <math.h>
 
 #include "mraa.h"
 
@@ -54,7 +55,7 @@ mraa_gpio_context led_gpio = NULL;
 mraa_aio_context tmp_aio = NULL;
 mraa_aio_context light_aio = NULL;
 
-inline void setup_pins()
+void setup_pins()
 {
     led_gpio = mraa_gpio_init(ONBOARD_LED_PIN); // Initialize pin 13
     if (led_gpio != NULL)
@@ -63,7 +64,7 @@ inline void setup_pins()
     light_aio = mraa_aio_init(LIGHT_SENSOR_AIO_PIN);   // initialize pin 2
 }
 
-inline void close_pins()
+void close_pins()
 {
     mraa_gpio_close(led_gpio);
     mraa_aio_close(tmp_aio);
@@ -72,24 +73,25 @@ inline void close_pins()
 
 int read_temp_mraa()
 {
+    setup_pins();
     // Temperature calculation using simpilfy Steinhart-Hart equation
     //
     //          1/T = 1/T0 + 1/beta*ln (R/R0)
     //
     // where T0 = 25C room temp, R0 = 10000 ohms
     //
-    /* float beta = 4090.0;            //the beta of the thermistor, magic number */
-    /* float t_raw = GetAverageTemperatureRaw(); */
-    /* float R = 1023.0/t_raw -1;      // */
-    /* R = 10000.0/R;                  // 10K resistor divider circuit */
+    float beta = 4090.0;            //the beta of the thermistor, magic number
+    float t_raw = GetAverageTemperatureRaw();
+    float R = 1023.0/t_raw -1;      //
+    R = 10000.0/R;                  // 10K resistor divider circuit
 
-    /* float T1 = log(R/10000.0)/beta; // natural log */
-    /* float T2 = T1 + 1.0/298.15;     // room temp 25C= 298.15K */
-    /* float ret = 1.0/T2 - 273.0; */
+    float T1 = log(R/10000.0)/beta; // natural log
+    float T2 = T1 + 1.0/298.15;     // room temp 25C= 298.15K
+    float ret = 1.0/T2 - 273.0;
 
-    /* return ret; */
+    close_pins();
 
-  return 73;
+  return ret;
 }
 
 OCRepPayload*
