@@ -31,6 +31,11 @@
 
 #define TAG "temperature"
 
+#define ONBOARD_LED_PIN 13
+#define TEMPERATURE_AIO_PIN 0
+#define LIGHT_SENSOR_AIO_PIN 2
+#define SAMPLE_NUM 5
+
 /* We only support one of these, so do it here: */
 struct rsvp_temperature my_temperature_rsvp = { .t     = RSC_T_TEMPERATURE,
 						.iface = RSC_IF_TEMPERATURE,
