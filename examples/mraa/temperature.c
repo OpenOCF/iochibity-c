@@ -71,6 +71,23 @@ void close_pins()
     mraa_aio_close(light_aio);
 }
 
+inline float get_avg_temp_raw()
+{
+    if (tmp_aio == NULL)
+    {
+        tmp_aio = mraa_aio_init(TEMPERATURE_AIO_PIN); // initialize pin 0
+    }
+
+    uint16_t adc_value = 0;
+    for (int i=0; i< SAMPLE_NUM; i++)
+        adc_value += mraa_aio_read(tmp_aio);           // read the raw value
+
+    float average = (float)adc_value/SAMPLE_NUM;
+    printf("Temperature reading raw ... %f\n", average);
+
+    return average;
+}
+
 int read_temp_mraa()
 {
     setup_pins();
