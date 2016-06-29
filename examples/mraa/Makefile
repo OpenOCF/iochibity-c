@@ -106,7 +106,8 @@ IOT_HEADERS= -I. \
 	-I${IOTIVITY_HOME}/resource/csdk/security/provisioning/include \
 	-I${IOTIVITY_HOME}/resource/csdk/security/provisioning/include/internal \
 	-I${IOTIVITY_HOME}/resource/csdk/security/include \
-	-I${IOTIVITY_HOME}/resource/csdk/connectivity/lib/libcoap-4.1.1
+	-I${IOTIVITY_HOME}/resource/csdk/connectivity/lib/libcoap-4.1.1 \
+	-I/usr/include/mraa
 
 #	-I${IOTIVITY_HOME}/resource/csdk/security/provisioning/include/oxm \
 #	# -I${IOTIVITY_HOME}/resource/c_common/oic_string/include \
@@ -134,9 +135,8 @@ IOT_LIBS = \
 	-lconnectivity_abstraction \
 	-lroutingmanager \
 	-lcoap \
-	-lpthread
-
-#	-lmraa \
+	-lpthread \
+	-lmraa \
 
 server:  server.o button.o led.o temperature.o
 	$(CC) -o server $(CFLAGS) -L. -L$(IOT_LIBPATH) button.o led.o temperature.o server.o $(LDFLAGS)

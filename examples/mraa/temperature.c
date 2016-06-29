@@ -25,7 +25,7 @@
 #include <signal.h>
 #include <pthread.h>
 
-/* #include "mraa.h" */
+#include "mraa.h"
 
 #include "temperature.h"
 
@@ -45,11 +45,10 @@ struct rsvp_temperature my_temperature_rsvp = { .t     = RSC_T_TEMPERATURE,
 /****************************************************************
     TEMPERATURE Instrument Model
  ****************************************************************/
-/* mraa_gpio_context led_gpio = NULL; */
-/* mraa_aio_context tmp_aio = NULL; */
-/* mraa_aio_context light_aio = NULL; */
+mraa_gpio_context led_gpio = NULL;
+mraa_aio_context tmp_aio = NULL;
+mraa_aio_context light_aio = NULL;
 
-/*
 inline void setup_pins()
 {
     led_gpio = mraa_gpio_init(ONBOARD_LED_PIN); // Initialize pin 13
@@ -65,7 +64,7 @@ inline void close_pins()
     mraa_aio_close(tmp_aio);
     mraa_aio_close(light_aio);
 }
-*/
+
 int read_temp_mraa()
 {
     // Temperature calculation using simpilfy Steinhart-Hart equation
@@ -85,7 +84,7 @@ int read_temp_mraa()
 
     /* return ret; */
 
-  return 72;
+  return 73;
 }
 
 OCRepPayload*
