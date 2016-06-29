@@ -98,7 +98,7 @@ int read_temp_mraa()
     // where T0 = 25C room temp, R0 = 10000 ohms
     //
     float beta = 4090.0;            //the beta of the thermistor, magic number
-    float t_raw = GetAverageTemperatureRaw();
+    float t_raw = get_avg_temp_raw();
     float R = 1023.0/t_raw -1;      //
     R = 10000.0/R;                  // 10K resistor divider circuit
 
