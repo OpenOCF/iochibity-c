@@ -93,15 +93,21 @@ double read_temp_mraa()
     setup_pins();
 
     /* http://www.seeedstudio.com/wiki/Grove_-_Temperature_Sensor_V1.2 */
-    const int B=4275;                 // B value of the thermistor
+    const int B=3975;  // 4275?                 // B value of the thermistor
     const int R0 = 100000;            // R0 = 100k
 
     int a = mraa_aio_read(tmp_aio);           // read the raw value
 
-    float R = 1023.0/((float)a)-1.0;
-    R = 100000.0*R;
+    printf("Raw tmp reading: %d\n", a);
 
-    float temperature=1.0/(log(R/100000.0)/B+1/298.15)-273.15;//convert to temperature via datasheet ;
+    float resistance = (float)(1023-val)*10000/a;
+    /* float R = 1023.0/((float)a)-1.0; */
+    /* R = 100000.0*R; */
+
+    /* Calculate the temperature based on the resistance value. */
+    float temperature = 1/(log(resistance/10000)/B+1/298.15)-273.15;
+
+    /* float temperature=1.0/(log(R/100000.0)/B+1/298.15)-273.15;//convert to temperature via datasheet ; */
 
     printf("temperature = %f\n", temperature);
 
