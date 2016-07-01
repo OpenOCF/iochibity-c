@@ -32,12 +32,9 @@
 
 #define TAG "temperature"
 
-#define ONBOARD_LED_PIN 13
 #define TEMPERATURE_AIO_PIN 0
-#define LIGHT_SENSOR_AIO_PIN 2
 #define SAMPLE_NUM 5
 
-/* We only support one of these, so do it here: */
 struct rsvp_temperature my_temperature_rsvp = { .t     = RSC_T_TEMPERATURE,
 						.iface = RSC_IF_TEMPERATURE,
 						.uri   = RSC_URI_TEMPERATURE,
@@ -51,24 +48,16 @@ struct rsvp_temperature my_temperature_rsvp = { .t     = RSC_T_TEMPERATURE,
 /****************************************************************
     TEMPERATURE Instrument Model
  ****************************************************************/
-mraa_gpio_context led_gpio = NULL;
 mraa_aio_context tmp_aio = NULL;
-mraa_aio_context light_aio = NULL;
 
 void setup_pins()
 {
-    led_gpio = mraa_gpio_init(ONBOARD_LED_PIN); // Initialize pin 13
-    if (led_gpio != NULL)
-        mraa_gpio_dir(led_gpio, MRAA_GPIO_OUT); // Set direction to OUTPUT
     tmp_aio = mraa_aio_init(TEMPERATURE_AIO_PIN);   // initialize pin 0
-    light_aio = mraa_aio_init(LIGHT_SENSOR_AIO_PIN);   // initialize pin 2
 }
 
 void close_pins()
 {
-    mraa_gpio_close(led_gpio);
     mraa_aio_close(tmp_aio);
-    mraa_aio_close(light_aio);
 }
 
 float get_avg_temp_raw()
@@ -90,8 +79,6 @@ float get_avg_temp_raw()
 
 double read_temp_mraa()
 {
-    setup_pins();
-
     /* http://www.seeedstudio.com/wiki/Grove_-_Temperature_Sensor_V1.2 */
     const int B=3975;  // 4275?                 // B value of the thermistor
     const int R0 = 100000;            // R0 = 100k
@@ -100,7 +87,7 @@ double read_temp_mraa()
 
     printf("Raw tmp reading: %d\n", a);
 
-    float resistance = (float)(1023-val)*10000/a;
+    float resistance = (float)(1023-a)*10000/a;
     /* float R = 1023.0/((float)a)-1.0; */
     /* R = 100000.0*R; */
 
@@ -286,6 +273,8 @@ svc_temperature_delete_request (OCEntityHandlerRequest *oic_request,
 
 void rmgr_register_temperature_rsvp (struct rsvp_temperature *rsvp)
 {
+    setup_pins();
+
     OCStackResult op_result = OC_STACK_OK;
     op_result = OCCreateResource(&(rsvp->handle),
 				 rsvp->t,

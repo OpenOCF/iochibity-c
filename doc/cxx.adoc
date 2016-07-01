@@ -1,0 +1,120 @@
+= c++ mapping
+
+The example code that ships with the repo is all written in C++ and most of it uses the C\+\+ API.
+
+Here are some notes on how the C++ API works.
+
+Example: examples/OICSensorBoard
+
+C API: incoming requests on server side for resource: OCEntityHandlerRequest
+
+Temp sensor object keeps m_resourceHandle, which is a
+shared_ptr<OCResource>.  It also has m_GETCallback which is a binding to its onGet method.
+
+In C++ API the callbacks for GET look like:
+
+              void Foo::onGet(const HeaderOptions& headerOptions,
+     			       		const OCRepresentation& representation,
+					int errCode)
+
+The actual GET call is made through the m_resourceHandle, which is an
+OCResource ptr.  The OCResource comes from resource discovery; it's
+assigned in IoTClient::discoveredResource, which is the callback for
+the resource discovery op.
+
+In other words, discovery returns an OCResource.  In C, it returns OCClientResponse, just like for any CRUDN request.
+
+Execution of a GET goes through the m_resourceHandle (OCResource).  WARNING: do not confuse
+
+    resource/include/OCResource.h
+    resource/csdk/stack/include/internal/ocresource.h
+
+In any case, OCResource.get takes a query params map and a "GetCallBack" (which is
+
+    typedef std::function<void(const HeaderOptions&,
+                                              const OCRepresentation&, const int)> GetCallback;
+
+and ends up calling
+
+    IClientWrapper::GetResourceRepresentation
+
+which translates to
+
+    OCStackResult InProcClientWrapper::GetResourceRepresentation (in InProcClientWrapper.cpp)
+
+And GetResourceRepresentation is where the actual message send occurs,
+through the C API's OCDoResource.
+
+NB: the C++ API puts the client callback in the context data, then
+sets the OCDoResource callback to a standard cb in the wrapper, which
+pulls the client cb out of the context and invokes it.
+
+So the C++ API alters the conceptual structure.  It seems to rely on
+the "Resource/Representation" language that I find so unhelpful, alas.
+
+Instead of sending a RETRIEVE message it calls "get" on an
+"OCResource".  The callback then receives an "OCRepresentation".
+
+This hides the send/receive message interaction.  That's not such a
+bad thing; what kind of interaction goes on behind the scenes is not
+relevant to the application code.
+
+Of course we can do the same thing in C.  And we can do it with more
+precise and accurate abstractions than "Resource" and
+"Representation".
+
+Key question: what is the right kind of abstraction?  of info hiding?
+two alternatives:
+
+    the c++ way: give the illusion of functional call "get" on a
+    "resource" which returns a "representation" of the resource
+    (asynchoronously)
+
+    an alternative: make the interactional aspect evident: send a
+    message, receive a response.
+
+The cool bit: they are actually the same model, once you grasp that
+the notion of "function" in play is actually a species of a more
+general concept of interaction.  The call/return semantics of ordinary
+functions is just a particular case of the more general
+action/observation protocol in interactional computation.
+
+
+
+
+C API:
+
+OCClientResponse in turn contains OCPayload *payload with some other data.  OCPayload is a polymorphic struct, which is a type header that can be cast to other specific payload types, e.g.
+
+enum OCPayloadType:
+    PAYLOAD_TYPE_INVALID
+    PAYLOAD_TYPE_DISCOVERY
+    PAYLOAD_TYPE_DEVICE
+    PAYLOAD_TYPE_PLATFORM
+    PAYLOAD_TYPE_REPRESENTATION
+    PAYLOAD_TYPE_SECURITY
+    PAYLOAD_TYPE_PRESENCE
+    PAYLOAD_TYPE_RD
+
+
+// used for get/set/put/observe/etc representations
+typedef struct OCRepPayload
+
+// used inside a discovery payload
+typedef struct OCResourcePayload
+
+typedef struct { ... } OCDevicePayload;
+typedef struct { ... } OCPlatformPayload;
+typedef struct { ... } OCDiscoveryPayload;  /* this is for Resources? */
+typedef struct { ... } OCSecurityPayload;
+typedef struct { ... } OCPresencePayload;
+typedef struct { ... } OCRDDiscoveryPayload;
+etc.
+
+
+Contrast: in the C API the callback service routines have this sig:
+
+OCStackApplicationResult (\*)(void* ctx,
+					     OCDoHandle handle,
+					     OCClientResponse * clientResponse)
+
