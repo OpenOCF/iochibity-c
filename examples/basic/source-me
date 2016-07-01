@@ -1,7 +1,0 @@
-# export IOTIVITY_HOME=/path/to/iotivity
-
-# darwin:
-export DYLD_LIBRARY_PATH=${IOTIVITY_HOME}/out/darwin/x86_64/release
-
-# linux
-# export DYLD_LIBRARY_PATH=${IOTIVITY_HOME}/out/darwin/x86_64/release

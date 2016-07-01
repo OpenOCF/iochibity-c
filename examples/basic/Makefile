@@ -4,11 +4,6 @@
 
 #FIXME:  check IOTIVITY_HOME
 
-#HOST=darwin
-HOST=linux
-
-ARCH=x86_64
-
 # STAGE: debug or release
 STAGE=release
 
