@@ -1,33 +1,24 @@
 # iotivity-c
 Iotivity C SDK
 
+== docs
+
+cod/operations.adoc has a concise summary of the kernel C API.
+
 == examples
 
 To compile and run the examples you need a working installation of the Iotivity dev kit.
 
-This may or may not work with the official repo available at
-https://www.iotivity.org/[iotivity.org].  It does work with
-https://github.com/iotk/iochibity[iochibity], which is a fork that
-supports Darwin and Java.
+Edit `source.me` and then `$ source source.me`.
 
-Set envronment var IOTIVITY_HOME to the root of the dev kit, e.g.
+Then:
 
 [source,sh]
 ----
-export IOTIVITY_HOME=$HOME/iotivity
+$ make server
+$ make client
 ----
 
-Source `source-me`.
-
-In the Makefile set HOST, ARCH, and STAGE as desired.
-
-Set the library path according to host.  Assuming IOTIVITY_HOME=~/iotivity:
-
-Linux:  set LD_LIBRARY_PATH to $(IOTIVITY_HOME)/out/$(HOST)/$(ARCH)/$(STAGE)
-
-Darwin: set DYLD_LIBRARY_PATH to $(IOTIVITY_HOME)/out/$(HOST)/$(ARCH)/$(STAGE)
-
-On OS X, do this in the shell, not the makefile. (?)
 
 If you run into link problems on OS X use `install_name_tool`.  See
 also `$ man ld`, search for "install_name".
