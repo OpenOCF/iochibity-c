@@ -78,8 +78,8 @@ OCDeviceInfo device_info =
   {
     .deviceName = "clientDeviceName",
     /* OCStringLL *types; */
-    .specVersion = "clientDeviceSpecVersion", /* device specification version */
-    .dataModelVersion = "clientDeviceModleVersion"
+    .specVersion = "clientDeviceSpecVersion" /* device specification version */
+    //.dataModelVersions = "clientDeviceModleVersion"
   };
 
 /* const char *deviceUUID = "myDeviceUUID"; */

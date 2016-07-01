@@ -89,6 +89,7 @@ IOT_HEADERS= -I. \
 	-I${IOTIVITY_HOME}/resource/csdk/ocsocket/include \
 	-I${IOTIVITY_HOME}/resource/csdk/logger/include \
 	-I${IOTIVITY_HOME}/resource/../extlibs/boost/boost_1_58_0 \
+	-I${IOTIVITY_HOME}/resource/../tinycbor/tinycbor/src \
 	-I${IOTIVITY_HOME}/resource/../build_common/android/compatibility \
 	-I${IOTIVITY_HOME}/resource/csdk/security/provisioning/include \
 	-I${IOTIVITY_HOME}/resource/csdk/security/provisioning/include/internal \
