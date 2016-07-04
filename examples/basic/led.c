@@ -27,6 +27,7 @@
 
 #include "server.h"
 #include "led.h"
+#include "utils.h"
 
 #define TAG "led"
 
@@ -39,6 +40,9 @@ led_request_dispatcher (OCEntityHandlerFlag flag,
 			OCEntityHandlerRequest *oic_request, /* just like HttpRequest */
 			void* cb /*callbackParam*/)
 {
+    UNUSED(flag);
+    UNUSED(oic_request);
+    UNUSED(cb);
     OCEntityHandlerResult ehResult = OC_EH_OK;
     /* OCEntityHandlerResponse response; */
     /* TODO: dispatch to service routine (get, put, etc.) */
@@ -50,7 +54,9 @@ OCEntityHandlerResult
 svc_led_create_request (OCEntityHandlerRequest *oic_request,
 			OCRepPayload          **payload)
 {
-    OCEntityHandlerResult ehResult;
+    UNUSED(oic_request);
+    UNUSED(payload);
+    OCEntityHandlerResult ehResult = OC_EH_OK;
     return ehResult;
 }
 
@@ -59,7 +65,9 @@ OCEntityHandlerResult
 svc_led_retrieve_request (OCEntityHandlerRequest *oic_request,
 			  OCRepPayload **payload)
 {
-    OCEntityHandlerResult ehResult;
+    UNUSED(oic_request);
+    UNUSED(payload);
+    OCEntityHandlerResult ehResult = OC_EH_OK;
     return ehResult;
 }
 
@@ -68,7 +76,9 @@ OCEntityHandlerResult
 svc_led_update_request (OCEntityHandlerRequest *oic_request,
 			OCRepPayload **payload)
 {
-    OCEntityHandlerResult ehResult;
+    UNUSED(oic_request);
+    UNUSED(payload);
+    OCEntityHandlerResult ehResult = OC_EH_OK;
     return ehResult;
 }
 
@@ -77,7 +87,9 @@ OCEntityHandlerResult
 svc_led_delete_request (OCEntityHandlerRequest *oic_request,
 			OCRepPayload **payload)
 {
-    OCEntityHandlerResult ehResult;
+    UNUSED(oic_request);
+    UNUSED(payload);
+    OCEntityHandlerResult ehResult = OC_EH_OK;
     return ehResult;
 }
 

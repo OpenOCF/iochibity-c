@@ -429,7 +429,7 @@ int discover_device(OCQualityOfService qos)
     return ret;
 }
 
-int discover_resources()
+int discover_resources(OCQualityOfService qos)
 {
     OCStackResult ret;
     OCCallbackData cbData;
@@ -474,7 +474,7 @@ int discover_resources()
     return ret;
 }
 
-void prompt_user()
+void *prompt_user(void * arg)
 {
   char action[1];
   struct timespec ts = { .tv_sec = 0,
@@ -485,7 +485,7 @@ void prompt_user()
       nanosleep(&ts, NULL);
     else {
       printf("\nChoose an action: 1) Platform discovery  2) Device discovery  3) Resource discovery q) Quit\n");
-      scanf("%s", &action);
+      scanf("%s", action);
       switch(*action) {
       case '1':
 	discover_platform(OC_LOW_QOS);
@@ -508,6 +508,7 @@ void prompt_user()
       }
     }
   }
+  return NULL;
 }
 
 /****************************************************************

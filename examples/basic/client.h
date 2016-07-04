@@ -3,8 +3,10 @@
 #define SERVER_H_
 
 #include "ocstack.h"
-#include "logger.h"
+#include "oic_malloc.h"
+#include "oic_string.h"
 #include "ocpayload.h"
+#include "logger.h"
 
 typedef				/* FIXME: put this in the sdk? */
 OCEntityHandlerResult (* ServiceRoutine) (OCEntityHandlerRequest *ehRequest,

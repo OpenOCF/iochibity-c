@@ -5,11 +5,9 @@
 #FIXME:  check IOTIVITY_HOME
 
 # STAGE: debug or release
-STAGE=release
 
 CPPFLAGS = -g -m64 -fPIC -pthread -Wall -Wextra -DTB_LOG $(SYSCFLAGS) $(MYCFLAGS) $(CPATH)
-CFLAGS   = -std=c11 $(CPPFLAGS)
-CXXFLAGS   = -std=c++0x -stdlib=libstdc++ $(CPPFLAGS)
+CFLAGS   = -std=c11
 CPATH    = $(IOT_HEADERS)
 LDFLAGS= $(SYSLDFLAGS) $(MYLDFLAGS) $(IOT_LIBS)
 LIBS= -lm $(SYSLIBS) $(MYLIBS)
@@ -85,6 +83,8 @@ IOT_HEADERS= -I. \
 	-I${IOTIVITY_HOME}/resource/csdk/connectivity/api \
 	-I${IOTIVITY_HOME}/resource/include \
 	-I${IOTIVITY_HOME}/resource/c_common \
+	-I${IOTIVITY_HOME}/resource/c_common/oic_malloc/include \
+	-I${IOTIVITY_HOME}/resource/c_common/oic_string/include \
 	-I${IOTIVITY_HOME}/resource/csdk/stack/include \
 	-I${IOTIVITY_HOME}/resource/csdk/ocsocket/include \
 	-I${IOTIVITY_HOME}/resource/csdk/logger/include \
@@ -101,7 +101,7 @@ IOT_HEADERS= -I. \
 #	# -I${IOTIVITY_HOME}/resource/c_common/oic_malloc/include \
 
 
-IOT_LIBPATH=$(IOTIVITY_HOME)/out/$(HOST)/$(ARCH)/$(STAGE)
+IOT_LIBPATH=$(IOTIVITY_HOME)/out/$(IOTIVITY_TARGET_OS)/$(IOTIVITY_TARGET_ARCH)/$(IOTIVITY_STAGE)
 
 # IOT_LIBS = $(IOT_LIBPATH)/liboctbstack.a \
 # 	$(IOT_LIBPATH)/libc_common.a \
@@ -138,16 +138,6 @@ client:  client.o
 
 client.o:  client.c client.h
 	$(CC) $(OCCLFLAGS) $(CFLAGS) $(CPATH) -c client.c
-
-occlient:  occlient.o common.o
-	g++ -o occlient $(CXXFLAGS) -L. -L$(IOT_LIBPATH) common.o occlient.o $(LDFLAGS)
-
-occlient.o:  occlient.cpp occlient.h
-	$(CC) $(OCCLFLAGS) $(CXXFLAGS) $(CPATH) -c occlient.cpp
-
-common.o: common.cpp
-	$(CC) $(OCCLFLAGS) $(CXXFLAGS) $(CPATH) -c common.cpp
-
 
 clean:
 	$(RM) server client *.o
