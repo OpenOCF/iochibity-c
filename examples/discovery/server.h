@@ -3,7 +3,6 @@
 #define SERVER_H_
 
 #include "ocstack.h"
-#include "logger.h"
 #include "ocpayload.h"
 
 typedef				/* FIXME: put this in the sdk? */

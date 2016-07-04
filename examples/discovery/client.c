@@ -485,7 +485,7 @@ void *prompt_user(void * arg)
       nanosleep(&ts, NULL);
     else {
       printf("\nChoose an action: 1) Platform discovery  2) Device discovery  3) Resource discovery q) Quit\n");
-      scanf("%s", action);
+      scanf("%s", (char*)&action);
       switch(*action) {
       case '1':
 	discover_platform(OC_LOW_QOS);

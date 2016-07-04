@@ -6,8 +6,7 @@
 
 # STAGE: debug or release
 
-CPPFLAGS = -g -m64 -fPIC -pthread -Wall -Wextra -DTB_LOG $(SYSCFLAGS) $(MYCFLAGS) $(CPATH)
-CFLAGS   = -std=c11
+CFLAGS = -g -std=c11 -m64 -fPIC -pthread -Wall -Wextra -DTB_LOG $(SYSCFLAGS) $(MYCFLAGS) $(CPATH)
 CPATH    = $(IOT_HEADERS)
 LDFLAGS= $(SYSLDFLAGS) $(MYLDFLAGS) $(IOT_LIBS)
 LIBS= -lm $(SYSLIBS) $(MYLIBS)
@@ -118,6 +117,7 @@ IOT_LIBS = \
 	-locsrm \
 	-lc_common \
 	-llogger \
+	-loc_logger \
 	-loc \
 	-lconnectivity_abstraction \
 	-lroutingmanager \

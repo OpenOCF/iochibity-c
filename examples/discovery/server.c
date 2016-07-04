@@ -28,8 +28,11 @@
 #include "server.h"
 #include "button.h"
 #include "led.h"
+#include "utils.h"
 
 #define TAG "minserver"
+
+pthread_t pt_work;
 
 /* Platform Descriptor: OCPlatformInfo
  * This structure describes the platform properties. All non-Null properties will be
@@ -70,8 +73,12 @@ default_request_dispatcher (OCEntityHandlerFlag flag,
 			    char *uri,
 			    void *cb /*callbackParam*/)
 {
+    UNUSED(flag);
+    UNUSED(oic_request);
+    UNUSED(uri);
+    UNUSED(cb);
     OCEntityHandlerResult ehResult = OC_EH_OK;
-    OCEntityHandlerResponse response;
+    /* OCEntityHandlerResponse response; */
     return ehResult;
 }
 
@@ -82,8 +89,6 @@ observers_t interestedObservers[SAMPLE_MAX_NUM_OBSERVATIONS];
 
 pthread_t threadId_observe;
 /* pthread_t threadId_presence; */
-
-static bool observeThreadStarted = false;
 
 /* #ifdef WITH_PRESENCE */
 /* #define numPresenceResources (2) */
@@ -96,8 +101,30 @@ void handleSigInt(int signum)
 {
     if (signum == SIGINT)
     {
+	/* if (OCStop() != OC_STACK_OK) { */
+	/*     printf("OCStack process error\n"); */
+	/* } else { */
+	/*     printf("foo\n"); */
+	/* } */
         gQuitFlag = 1;
     }
+}
+
+/* thread routine - service client requests */
+void *troutine_work(void *arg)
+{
+    UNUSED(arg);
+    printf("Entering server work thread...\n");
+
+    while (!gQuitFlag) {
+	if (OCProcess() != OC_STACK_OK) {
+	    printf("OCStack process error\n");
+	}
+    }
+    printf("Exiting server work thread...\n");
+    /* we're the only thread left, pthread_exit(NULL) would kill us,
+       but not the process. */
+    exit(0);
 }
 
 static void PrintUsage()
@@ -114,10 +141,13 @@ static void PrintUsage()
  *  3. register device info
  *  4. register service routine for default rsvp
  *  5. register Resource Service Provider for each resource
- *  6. enter processing loop
+ *  6. spawn work thread
+ *  7. exit main thread, leaving process (and work thread) running
  ****************************************************************/
 int main(int argc, char* argv[])
 {
+    /* pthread_t pt_main = pthread_self(); */
+
     int opt = 0;
 
     while ((opt = getopt(argc, argv, "o:s:p:d:u:w:r:j:")) != -1) {
@@ -135,8 +165,6 @@ int main(int argc, char* argv[])
         PrintUsage();
         return -1;
     }
-
-    OIC_LOG(DEBUG, TAG, "OCServer is starting...");
 
     OCStackResult op_result;
 
@@ -194,55 +222,13 @@ int main(int argc, char* argv[])
       exit (EXIT_FAILURE);
     }
 
-    // Initialize observations data structure for the resource
-    /* for (uint8_t i = 0; i < SAMPLE_MAX_NUM_OBSERVATIONS; i++) */
-    /* { */
-    /*     interestedObservers[i].valid = false; */
-    /* } */
-
-
-    /*
-     * Create a thread for generating changes that cause presence notifications
-     * to be sent to clients
-     */
-
-    /* #ifdef WITH_PRESENCE */
-    /* pthread_create(&threadId_presence, NULL, presenceNotificationGenerator, (void *)NULL); */
-    /* #endif */
-
-    // Break from loop with Ctrl-C
-    printf("Entering ocserver main loop...\n");
-
-    /* DeletePlatformInfo(); */
-    /* DeleteDeviceInfo(); */
-
+    /* register async quit signal handler */
     signal(SIGINT, handleSigInt);
 
-    while (!gQuitFlag)
-    {
-        if (OCProcess() != OC_STACK_OK)
-        {
-            printf("OCStack process error\n");
-            return 0;
-        }
-    }
+    pthread_create (&pt_work, NULL, troutine_work, (void *)NULL);
 
-    /* if (observeThreadStarted) */
-    /* { */
-    /*     pthread_cancel(threadId_observe); */
-    /*     pthread_join(threadId_observe, NULL); */
-    /* } */
-
-    /* pthread_cancel(threadId_presence); */
-    /* pthread_join(threadId_presence, NULL); */
-
-    printf("Exiting ocserver main loop...\n");
-
-    if (OCStop() != OC_STACK_OK)
-    {
-        printf("OCStack process error\n");
-    }
-
-    return 0;
+    /* main thread has nothing to do. by calling pthread_exit it exits
+       but the process continues, so any spawned threads do too. */
+    pthread_exit(NULL);
 }
 
