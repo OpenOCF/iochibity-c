@@ -118,3 +118,55 @@ OCStackApplicationResult (\*)(void* ctx,
 					     OCDoHandle handle,
 					     OCClientResponse * clientResponse)
 
+
+== api mappings
+
+OCPlatform.findResource (overloaded) calls IClientWrapper::ListenForResource (or IClientWrapper::ListenErrorForResource)
+
+    InProcClientWrapper::ListenForResource calls:
+
+            result = OCDoResource(nullptr, OC_REST_DISCOVER,
+                                  resourceUri.str().c_str(),
+                                  nullptr, nullptr, connectivityType,
+                                  static_cast<OCQualityOfService>(QoS),
+                                  &cbdata,
+                                  nullptr, 0);
+
+    InProcClientWrapper::ListenErrorForResource calls:
+
+            result = OCDoResource(nullptr, OC_REST_DISCOVER,
+                                  resourceUri.str().c_str(),
+                                  nullptr, nullptr, connectivityType,
+                                  static_cast<OCQualityOfService>(QoS),
+                                  &cbdata,
+                                  nullptr, 0);
+
+
+        in ocstack.c:
+
+	    OCStackResult OCDoResource(OCDoHandle *handle,
+                            OCMethod method,
+                            const char *requestUri,
+                            const OCDevAddr *destination,
+                            OCPayload* payload,
+                            OCConnectivityType connectivityType,
+                            OCQualityOfService qos,
+                            OCCallbackData *cbData,
+                            OCHeaderOption *options,
+                            uint8_t numOptions)
+
+
+
+OCPlatform.getDeviceInfo calls IClientWrapper::ListenForDevice
+
+    InProcClientWrapper::ListenForDevice calls:
+
+            result = OCDoResource(nullptr, OC_REST_DISCOVER,
+                                  deviceUri.str().c_str(),
+                                  nullptr, nullptr, connectivityType,
+                                  static_cast<OCQualityOfService>(QoS),
+                                  &cbdata,
+                                  nullptr, 0);
+
+OCPlatform.registerDeviceInfo calls IServerWrapper::registerDeviceInfo
+
