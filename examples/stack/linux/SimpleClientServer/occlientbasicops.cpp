@@ -85,15 +85,15 @@ OCPayload* putPayload()
 
 static void PrintUsage()
 {
-    OIC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3> -c <0|1>");
-    OIC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
-    OIC_LOG(INFO, TAG, "-t 1 : Discover Resources");
-    OIC_LOG(INFO, TAG, "-t 2 : Discover Resources and"
-            " Initiate Nonconfirmable Get/Put/Post Requests");
-    OIC_LOG(INFO, TAG, "-t 3 : Discover Resources and Initiate "
-            "Confirmable Get/Put/Post Requests");
-    OIC_LOG(INFO, TAG, "-c 0 : Default auto-selection");
-    OIC_LOG(INFO, TAG, "-c 1 : IP Connectivity Type");
+    printf("Usage : occlient -u <0|1> -t <1|2|3> -c <0|1>\n");
+    printf("\t-u <0|1> : Perform multicast/unicast discovery of resources\n");
+    printf("\t-t 1 : Discover Resources\n");
+    printf("\t-t 2 : Discover Resources and"
+            " Initiate Nonconfirmable Get/Put/Post Requests\n");
+    printf("\t-t 3 : Discover Resources and Initiate "
+            "Confirmable Get/Put/Post Requests\n");
+    printf("\t-c 0 : Default auto-selection\n");
+    printf("\t-c 1 : IP Connectivity Type\n");
 }
 
 /*

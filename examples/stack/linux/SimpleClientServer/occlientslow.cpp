@@ -65,15 +65,15 @@ void handleSigInt(int signum)
 
 static void PrintUsage()
 {
-    OIC_LOG(INFO, TAG, "Usage : occlient -c <0|1> -u <0|1> -t <1|2|3>");
-    OIC_LOG(INFO, TAG, "-c 0 : Default auto-selection");
-    OIC_LOG(INFO, TAG, "-c 1 : IP Connectivity Type");
-    OIC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
-    OIC_LOG(INFO, TAG, "-t 1 : Discover Resources");
-    OIC_LOG(INFO, TAG, "-t 2 : Discover Resources and Initiate Nonconfirmable Get Request");
-    OIC_LOG(INFO, TAG, "-t 3 : Discover Resources and Initiate Confirmable Get Request");
-    OIC_LOG(INFO, TAG, "-t 4 : Discover Resources and Initiate NonConfirmable Put Request");
-    OIC_LOG(INFO, TAG, "-t 5 : Discover Resources and Initiate Confirmable Put Request");
+    printf("Usage : occlient -c <0|1> -u <0|1> -t <1|2|3>\n");
+    printf("\t-c 0 : Default auto-selection\n");
+    printf("\t-c 1 : IP Connectivity Type\n");
+    printf("\t-u <0|1> : Perform multicast/unicast discovery of resources\n");
+    printf("\t-t 1 : Discover Resources\n");
+    printf("\t-t 2 : Discover Resources and Initiate Nonconfirmable Get Request\n");
+    printf("\t-t 3 : Discover Resources and Initiate Confirmable Get Request\n");
+    printf("\t-t 4 : Discover Resources and Initiate NonConfirmable Put Request\n");
+    printf("\t-t 5 : Discover Resources and Initiate Confirmable Put Request\n");
 }
 
 OCPayload* putPayload()
@@ -134,13 +134,17 @@ OCStackApplicationResult getReqCB(void* ctx,
     OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
 
     if(//GAR clientResponse->rcvdVendorSpecificHeaderOptions &&
-            clientResponse->numRcvdVendorSpecificHeaderOptions)
+            clientResponse->numRcvdVendorSpecificHeaderOptions > 0 )
     {
-        OIC_LOG (INFO, TAG, "Received vendor specific options");
+        OIC_LOG_V(INFO, TAG, "Received %d vendor specific options",
+		  clientResponse->numRcvdVendorSpecificHeaderOptions);
         uint8_t i = 0;
         OCHeaderOption * rcvdOptions = clientResponse->rcvdVendorSpecificHeaderOptions;
         for( i = 0; i < clientResponse->numRcvdVendorSpecificHeaderOptions; i++)
         {
+	    printf("Option %d: Protocol ID=%d, Option ID=%u\n", i,
+		   ((OCHeaderOption)rcvdOptions[i]).protocolID,
+		   ((OCHeaderOption)rcvdOptions[i]).optionID);
             if(((OCHeaderOption)rcvdOptions[i]).protocolID == OC_COAP_ID)
             {
                 OIC_LOG_V(INFO, TAG, "Received option with OC_COAP_ID and ID %u with",

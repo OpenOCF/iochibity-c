@@ -60,8 +60,10 @@ OCDeviceInfo device_info =
   {
     .deviceName = "minDeviceName",
     /* OCStringLL *types; */
-    .specVersion = "minDeviceSpecVersion" /* device specification version */
+    .types = NULL,
+    .specVersion = "minDeviceSpecVersion", /* device specification version */
     // .dataModelVersions = "minDeviceModelVersion"
+    .dataModelVersions = NULL
   };
 
 /* const char *deviceUUID = "myDeviceUUID"; */
@@ -127,6 +129,12 @@ void *troutine_work(void *arg)
     exit(0);
 }
 
+/* FILE* server_fopen(const char *path, const char *mode) */
+/* { */
+/*     (void)path; */
+/*     return fopen(CRED_FILE, mode); */
+/* } */
+
 static void PrintUsage()
 {
     printf("Usage : ocserver -o <0|1>\n");
@@ -167,6 +175,11 @@ int main(int argc, char* argv[])
     }
 
     OCStackResult op_result;
+
+    /* /\* 0. if SECURED == 1 *\/ */
+    /* // Initialize Persistent Storage for SVR database */
+    /* OCPersistentStorage ps = { server_fopen, fread, fwrite, fclose, unlink }; */
+    /* OCRegisterPersistentStorageHandler(&ps); */
 
     /* 1. initialize */
     op_result = OCInit(NULL, 0, OC_SERVER);

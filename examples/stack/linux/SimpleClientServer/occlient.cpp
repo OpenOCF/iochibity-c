@@ -105,41 +105,41 @@ OCPayload* putPayload()
 
 static void PrintUsage()
 {
-    OIC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1..17> -c <0|1>");
-    OIC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
-    OIC_LOG(INFO, TAG, "-c 0 : Use Default connectivity(IP)");
-    OIC_LOG(INFO, TAG, "-c 1 : IP Connectivity Type");
-    OIC_LOG(INFO, TAG, "-t 1  :  Discover Resources");
-    OIC_LOG(INFO, TAG, "-t 2  :  Discover Resources and Initiate Nonconfirmable Get Request");
-    OIC_LOG(INFO, TAG, "-t 3  :  Discover Resources and Initiate Nonconfirmable Get Request"
-            " with query filter.");
-    OIC_LOG(INFO, TAG, "-t 4  :  Discover Resources and Initiate Nonconfirmable Put Requests");
-    OIC_LOG(INFO, TAG, "-t 5  :  Discover Resources and Initiate Nonconfirmable Post Requests");
-    OIC_LOG(INFO, TAG, "-t 6  :  Discover Resources and Initiate Nonconfirmable Delete Requests");
-    OIC_LOG(INFO, TAG, "-t 7  :  Discover Resources and Initiate Nonconfirmable Observe Requests");
-    OIC_LOG(INFO, TAG, "-t 8  :  Discover Resources and Initiate Nonconfirmable Get Request "\
-            "for a resource which is unavailable");
-    OIC_LOG(INFO, TAG, "-t 9  :  Discover Resources and Initiate Confirmable Get Request");
-    OIC_LOG(INFO, TAG, "-t 10 :  Discover Resources and Initiate Confirmable Post Request");
-    OIC_LOG(INFO, TAG, "-t 11 :  Discover Resources and Initiate Confirmable Delete Requests");
-    OIC_LOG(INFO, TAG, "-t 12 :  Discover Resources and Initiate Confirmable Observe Requests"\
-            " and cancel with Low QoS");
+    printf("Usage : occlient -u <0|1> -t <1..17> -c <0|1>\n");
+    printf("\t-u <0|1> : Perform multicast/unicast discovery of resources\n");
+    printf("\t-c 0 : Use Default connectivity(IP)\n");
+    printf("\t-c 1 : IP Connectivity Type\n");
+    printf("\t-t 1  :  Discover Resources\n");
+    printf("\t-t 2  :  Discover Resources and Initiate Nonconfirmable Get Request\n");
+    printf("\t-t 3  :  Discover Resources and Initiate Nonconfirmable Get Request"
+            " with query filter.\n");
+    printf("\t-t 4  :  Discover Resources and Initiate Nonconfirmable Put Requests\n");
+    printf("\t-t 5  :  Discover Resources and Initiate Nonconfirmable Post Requests\n");
+    printf("\t-t 6  :  Discover Resources and Initiate Nonconfirmable Delete Requests\n");
+    printf("\t-t 7  :  Discover Resources and Initiate Nonconfirmable Observe Requests\n");
+    printf("\t-t 8  :  Discover Resources and Initiate Nonconfirmable Get Request "\
+            "for a resource which is unavailable\n");
+    printf("\t-t 9  :  Discover Resources and Initiate Confirmable Get Request\n");
+    printf("\t-t 10 :  Discover Resources and Initiate Confirmable Post Request\n");
+    printf("\t-t 11 :  Discover Resources and Initiate Confirmable Delete Requests\n");
+    printf("\t-t 12 :  Discover Resources and Initiate Confirmable Observe Requests"\
+            " and cancel with Low QoS\n");
 
 #ifdef WITH_PRESENCE
-    OIC_LOG(INFO, TAG, "-t 13 :  Discover Resources and Initiate Nonconfirmable presence");
-    OIC_LOG(INFO, TAG, "-t 14 :  Discover Resources and Initiate Nonconfirmable presence with "\
-            "filter");
-    OIC_LOG(INFO, TAG, "-t 15 :  Discover Resources and Initiate Nonconfirmable presence with "\
-            "2 filters");
-    OIC_LOG(INFO, TAG, "-t 16 :  Discover Resources and Initiate Nonconfirmable multicast presence.");
+    printf("\t-t 13 :  Discover Resources and Initiate Nonconfirmable presence\n");
+    printf("\t-t 14 :  Discover Resources and Initiate Nonconfirmable presence with "\
+            "filter\n");
+    printf("\t-t 15 :  Discover Resources and Initiate Nonconfirmable presence with "\
+            "2 filters\n");
+    printf("\t-t 16 :  Discover Resources and Initiate Nonconfirmable multicast presence.\n");
 #endif
 
-    OIC_LOG(INFO, TAG, "-t 17 :  Discover Resources and Initiate Nonconfirmable Observe Requests "\
-            "then cancel immediately with High QOS");
-    OIC_LOG(INFO, TAG, "-t 18 :  Discover Resources and Initiate Nonconfirmable Get Request and "\
-            "add  vendor specific header options");
-    OIC_LOG(INFO, TAG, "-t 19 :  Discover Platform");
-    OIC_LOG(INFO, TAG, "-t 20 :  Discover Devices");
+    printf("\t-t 17 :  Discover Resources and Initiate Nonconfirmable Observe Requests "\
+            "then cancel immediately with High QOS\n");
+    printf("\t-t 18 :  Discover Resources and Initiate Nonconfirmable Get Request and "\
+            "add  vendor specific header options\n");
+    printf("\t-t 19 :  Discover Platform\n");
+    printf("\t-t 20 :  Discover Devices\n");
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
@@ -385,7 +385,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
         OIC_LOG_V(INFO, TAG, "StackResult: %s", getResult(clientResponse->result));
 
         std::string connectionType = getConnectivityType (clientResponse->connType);
-        OIC_LOG_V(INFO, TAG, "Discovered on %s", connectionType.c_str());
+        OIC_LOG_V(INFO, TAG, "Discovered on connection type %s", connectionType.c_str());
         OIC_LOG_V(INFO, TAG,
                 "Device =============> Discovered @ %s:%d",
                 clientResponse->devAddr.addr,
@@ -927,24 +927,27 @@ int main(int argc, char* argv[])
 
 std::string getConnectivityType (OCConnectivityType connType)
 {
-    switch (connType & CT_MASK_ADAPTER)
-    {
-        case CT_ADAPTER_IP:
-            return "IP";
+    switch (connType & CT_MASK_ADAPTER)	{
+    case CT_DEFAULT:
+	return "DEFAULT";
 
-        case CT_IP_USE_V4:
-            return "IPv4";
+    case CT_ADAPTER_IP:
+	return "IP";
 
-        case CT_IP_USE_V6:
-            return "IPv6";
+    case CT_IP_USE_V4:
+	return "IPv4";
 
-        case CT_ADAPTER_GATT_BTLE:
-            return "GATT";
+    case CT_IP_USE_V6:
+	return "IPv6";
 
-        case CT_ADAPTER_RFCOMM_BTEDR:
-            return "RFCOMM";
+    case CT_ADAPTER_GATT_BTLE:
+	return "GATT";
 
-        default:
-            return "Incorrect connectivity";
+    case CT_ADAPTER_RFCOMM_BTEDR:
+	return "RFCOMM";
+
+    default:
+	OIC_LOG_V(ERROR, TAG, "Bad connectivity type: %d\n", connType);
+	return "Incorrect connectivity";
     }
 }

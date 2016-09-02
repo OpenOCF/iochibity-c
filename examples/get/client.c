@@ -18,14 +18,13 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include <pthread.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <getopt.h>
 #include <signal.h>
 #include <pthread.h>
-#include <unistd.h>
-#include <time.h>
 
 #include "ocstack.h"
 #include "logger.h"
@@ -33,10 +32,10 @@
 #include "payload_logging.h"
 
 #include "client.h"
-#include "button.h"
-#include "led.h"
+#include "temperature.h"
+#include "utils.h"
 
-#define TAG "discovery client"
+#define TAG "GET client"
 
 #define DEFAULT_CONTEXT_VALUE 0x99
 
@@ -44,14 +43,12 @@ static int UnicastDiscovery = 0;
 
 pthread_t ui_thread;
 
-/* %s will be replaced by IP address */
-static const char *RSC_URI_RESOURCES = "%s/oic/res";
-static const char *RSC_URI_PLATFORM  = "%s/oic/p";
-static const char *PLATFORM_DISCOVERY_QUERY = "%s/oic/p";
-
-static const char *RSC_URI_DEVICE    = "%s/oic/d";
-
 static char discoveryAddr[100];
+
+static OCDevAddr device_address;
+//The following variable determines the interface protocol (IPv4, IPv6, etc)
+//to be used for sending unicast messages. Default set to IP dual stack.
+static OCConnectivityType conn_type = CT_ADAPTER_IP;
 
 /* Platform Descriptor: OCPlatformInfo
  * This structure describes the platform properties. All non-Null properties will be
@@ -92,8 +89,12 @@ default_request_dispatcher (OCEntityHandlerFlag flag,
 			    char *uri,
 			    void *cb /*callbackParam*/)
 {
+    OC_UNUSED(flag);
+    OC_UNUSED(oic_request);
+    OC_UNUSED(uri);
+    OC_UNUSED(cb);
     OCEntityHandlerResult ehResult = OC_EH_OK;
-    OCEntityHandlerResponse response;
+    /* OCEntityHandlerResponse response; */
     return ehResult;
 }
 
@@ -105,7 +106,7 @@ observers_t interestedObservers[SAMPLE_MAX_NUM_OBSERVATIONS];
 pthread_t threadId_observe;
 /* pthread_t threadId_presence; */
 
-static bool observeThreadStarted = false;
+/* static bool observeThreadStarted = false; */
 
 /* #ifdef WITH_PRESENCE */
 /* #define numPresenceResources (2) */
@@ -125,11 +126,40 @@ void handleSigInt(int signum)
     }
 }
 
-static void PrintUsage()
+OCStackResult send_oic_messsage(OCMethod method,
+				OCDevAddr* device_address,
+				char* query_uri,
+				OCPayload* payload,
+				OCQualityOfService qos,
+				OCClientResponseHandler cb)
+				/* OCHeaderOption * options, */
+				/* uint8_t numOptions) */
 {
-    printf("Usage : ocserver -o <0|1>\n");
-    printf("-o 0 : Notify all observers\n");
-    printf("-o 1 : Notify list of observers\n");
+    OCStackResult ret;
+    OCCallbackData cbData;
+    OCDoHandle handle;
+
+    cbData.cb = cb;
+    cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
+    cbData.cd = NULL;
+
+    ret = OCDoResource(&handle,
+		       method,
+		       query_uri,
+		       device_address,
+		       NULL,  /* payload, */
+		       conn_type, /* OCConnectivityType */
+		       qos,
+		       &cbData,
+		       NULL,	/* OCHeaderOption* */
+		       0);	/* numOptions */
+
+    if (ret != OC_STACK_OK)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCDoResource returns error %d with method %d", ret, method);
+    }
+
+    return ret;
 }
 
 /* **************************************************************** */
@@ -155,36 +185,37 @@ void queryResource()
     /* } */
 }
 
-void printResourceList()
+void print_resource_list()
 {
     struct ResourceNode * iter;
     iter = resourceList;
     OIC_LOG(INFO, TAG, "Resource List: ");
+    /* FIXME: group by server id */
+    OIC_LOG_V(INFO, TAG, "Server: %s",iter->sid);
     while(iter)
     {
-        OIC_LOG(INFO, TAG, "*****************************************************");
-        OIC_LOG_V(INFO, TAG, "sid = %s",iter->sid);
-        OIC_LOG_V(INFO, TAG, "uri = %s", iter->uri);
-        OIC_LOG_V(INFO, TAG, "ip = %s", iter->endpoint.addr);
-        OIC_LOG_V(INFO, TAG, "port = %d", iter->endpoint.port);
-        switch (iter->endpoint.adapter)
-        {
-            case OC_ADAPTER_IP:
-                OIC_LOG(INFO, TAG, "connType = Default (IPv4)");
-                break;
-            case OC_ADAPTER_GATT_BTLE:
-                OIC_LOG(INFO, TAG, "connType = BLE");
-                break;
-            case OC_ADAPTER_RFCOMM_BTEDR:
-                OIC_LOG(INFO, TAG, "connType = BT");
-                break;
-            default:
-                OIC_LOG(INFO, TAG, "connType = Invalid connType");
-                break;
-        }
-        OIC_LOG(INFO, TAG, "*****************************************************");
+        OIC_LOG_V(INFO, TAG, "\tresource address   = [%s]:%d%s", iter->dev_addr.addr, iter->dev_addr.port, iter->uri);
+        /* OIC_LOG_V(INFO, TAG, "uri = %s", iter->uri); */
+        /* OIC_LOG_V(INFO, TAG, "ip = %s", iter->dev_addr.addr); */
+        /* OIC_LOG_V(INFO, TAG, "port = %d", iter->dev_addr.port); */
+        /* switch (iter->dev_addr.adapter) */
+        /* { */
+        /*     case OC_ADAPTER_IP: */
+        /*         OIC_LOG(INFO, TAG, "connType = Default (IP)"); */
+        /*         break; */
+        /*     case OC_ADAPTER_GATT_BTLE: */
+        /*         OIC_LOG(INFO, TAG, "connType = BLE"); */
+        /*         break; */
+        /*     case OC_ADAPTER_RFCOMM_BTEDR: */
+        /*         OIC_LOG(INFO, TAG, "connType = BT"); */
+        /*         break; */
+        /*     default: */
+        /*         OIC_LOG(INFO, TAG, "connType = Invalid connType"); */
+        /*         break; */
+        /* } */
         iter = iter->next;
     }
+    waiting = 0;		/* tell ui thread we're done */
 }
 
 /* This function searches for the resource(sid:uri) in the ResourceList.
@@ -192,7 +223,7 @@ void printResourceList()
  * the resource to front of the list and returns 1.
  */
 int insertResource(const char * sid, char const * uri,
-            const OCClientResponse * clientResponse)
+            const OCClientResponse * client_response)
 {
     struct ResourceNode * iter = resourceList;
     char * sid_cpy =  OICStrdup(sid);
@@ -218,7 +249,7 @@ int insertResource(const char * sid, char const * uri,
     {
         iter->sid = sid_cpy;
         iter->uri = uri_cpy;
-        iter->endpoint = clientResponse->devAddr;
+        iter->dev_addr = client_response->devAddr;
         iter->next = NULL;
     }
     else
@@ -242,9 +273,9 @@ int insertResource(const char * sid, char const * uri,
     return 1;
 }
 
-void collectUniqueResource(const OCClientResponse * clientResponse)
+void collectUniqueResource(const OCClientResponse * client_response)
 {
-    OCDiscoveryPayload* pay = (OCDiscoveryPayload*) clientResponse->payload;
+    OCDiscoveryPayload* pay = (OCDiscoveryPayload*) client_response->payload;
     OCResourcePayload* res = pay->resources;
 
     // Including the NUL terminator, length of UUID string of the form:
@@ -265,14 +296,18 @@ void collectUniqueResource(const OCClientResponse * clientResponse)
 
         if (ret == UUID_LENGTH - 1)
         {
-            if(insertResource(sidStr, res->uri, clientResponse) == 1)
+	    if ( strncmp(res->uri, RSC_URI_TEMPERATURE, strnlen(RSC_URI_TEMPERATURE, 14)) == 0 ) {
+		device_address = client_response->devAddr;
+		conn_type      = client_response->connType;
+	    }
+            if(insertResource(sidStr, res->uri, client_response) == 1)
             {
-                OIC_LOG_V(INFO,TAG,"%s%s%s%s\n",sidStr, ":", res->uri, " is new");
-                printResourceList();
-                queryResource();
+                OIC_LOG_V(INFO,TAG,"%s%s%s%s",sidStr, ":", res->uri, " is new");
+                /* print_resource_list(); */
+                /* queryResource(); */
             }
             else {
-                OIC_LOG_V(INFO,TAG,"%s%s%s%s\n",sidStr, ":", res->uri, " is old");
+                OIC_LOG_V(INFO,TAG,"%s%s%s%s",sidStr, ":", res->uri, " is old");
             }
         }
         else
@@ -289,56 +324,55 @@ void collectUniqueResource(const OCClientResponse * clientResponse)
  ****************************************************************/
 OCStackApplicationResult svc_platform_discovery_response(void* ctx,
 							 OCDoHandle handle,
-							 OCClientResponse * clientResponse)
+							 OCClientResponse * client_response)
 {
+    OC_UNUSED(handle);
     if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
     {
         OIC_LOG(INFO, TAG, "PLATFORM DISCOVERY callback context: success");
-        OIC_LOG_V(INFO, TAG, "\tResponse addr: %s", clientResponse->devAddr.addr);
-        OIC_LOG_V(INFO, TAG, "\tResponse port: %d", clientResponse->devAddr.port);
-        OIC_LOG_V(INFO, TAG, "\tResponse uri:  %s", clientResponse->resourceUri);
+	print_client_response_header(client_response);
     }
     else
     {
-        OIC_LOG_V(INFO, TAG, "PLATFORM DISCOVERY callback context: failure (%x)", ctx);
+        OIC_LOG_V(INFO, TAG, "PLATFORM DISCOVERY callback context: failure (%x)", (unsigned int)ctx);
     }
 
-    if (clientResponse)
+    if (client_response)
     {
-        OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
+        OIC_LOG_PAYLOAD(INFO, client_response->payload);
     }
     else
     {
-        OIC_LOG_V(ERROR, TAG, "PLATFORM DISCOVERY clientResponse failure: %x", clientResponse);
+        OIC_LOG_V(ERROR, TAG, "PLATFORM DISCOVERY client_response failure: %x", (unsigned int)client_response);
     }
 
+    /* FIXME: this doesn't really work - we don't know how many responses to expect */
     waiting = 0;		/* tell ui thread we're done */
     return (UnicastDiscovery) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION;
 }
 
 OCStackApplicationResult svc_device_discovery_response(void* ctx,
 						       OCDoHandle handle,
-						       OCClientResponse * clientResponse)
+						       OCClientResponse * client_response)
 {
+    OC_UNUSED(handle);
     if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
     {
         OIC_LOG(INFO, TAG, "DEVICE DISCOVERY callback context: success");
-        OIC_LOG_V(INFO, TAG, "\tResponse addr: %s", clientResponse->devAddr.addr);
-        OIC_LOG_V(INFO, TAG, "\tResponse port: %d", clientResponse->devAddr.port);
-        OIC_LOG_V(INFO, TAG, "\tResponse uri:  %s", clientResponse->resourceUri);
+	print_client_response_header(client_response);
     }
     else
     {
-        OIC_LOG_V(INFO, TAG, "DEVICE DISCOVERY callback context: failure (%x)", ctx);
+        OIC_LOG_V(INFO, TAG, "DEVICE DISCOVERY callback context: failure (%x)", (unsigned int)ctx);
     }
 
-    if (clientResponse)
+    if (client_response)
     {
-        OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
+        OIC_LOG_PAYLOAD(INFO, client_response->payload);
     }
     else
     {
-        OIC_LOG_V(ERROR, TAG, "DEVICE DISCOVERY clientResponse failure: %x", clientResponse);
+        OIC_LOG_V(ERROR, TAG, "DEVICE DISCOVERY client_response failure: %x", (unsigned int)client_response);
     }
 
     waiting = 0;		/* tell ui thread we're done */
@@ -347,33 +381,82 @@ OCStackApplicationResult svc_device_discovery_response(void* ctx,
 
 OCStackApplicationResult svc_resource_discovery_response(void *ctx,
 							 OCDoHandle handle,
-							 OCClientResponse *clientResponse)
+							 OCClientResponse *client_response)
 {
+    OC_UNUSED(handle);
     if (ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
         OIC_LOG(INFO, TAG, "RESOURCE DISCOVERY callback context: success");
-        OIC_LOG_V(INFO, TAG, "\tResponse addr: %s", clientResponse->devAddr.addr);
-        OIC_LOG_V(INFO, TAG, "\tResponse port: %d", clientResponse->devAddr.port);
-        OIC_LOG_V(INFO, TAG, "\tResponse uri:  %s", clientResponse->resourceUri);
+	print_client_response_header(client_response);
     }
     else
     {
         OIC_LOG(ERROR, TAG, "RESOURCE DISCOVERY callback context: failure");
     }
 
-    if (clientResponse)
+    if (client_response)
     {
-        OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
-        /* collectUniqueResource(clientResponse); */
+        OIC_LOG_PAYLOAD(INFO, client_response->payload);
+        collectUniqueResource(client_response);
     }
     else
     {
-        OIC_LOG_V(ERROR, TAG, "RESOURCE DISCOVERY clientResponse failure: %x", clientResponse);
+        OIC_LOG_V(ERROR, TAG, "RESOURCE DISCOVERY client_response failure: %x", (unsigned int)client_response);
     }
 
     waiting = 0;		/* tell ui thread we're done */
     return (UnicastDiscovery) ?
            OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION ;
+}
+
+OCStackApplicationResult svc_get_response(void* ctx,
+					  OCDoHandle handle,
+					  OCClientResponse* client_response)
+{
+    OC_UNUSED(handle);
+    if (ctx == (void*)DEFAULT_CONTEXT_VALUE)
+    {
+        OIC_LOG(INFO, TAG, "RESOURCE GET callback context: success");
+	print_client_response_header(client_response);
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "RESOURCE GET callback context: failure");
+    }
+
+    if(client_response == NULL)
+    {
+        OIC_LOG(INFO, TAG, "RESOURCE GET client_response is NULL");
+        return   OC_STACK_DELETE_TRANSACTION;
+    }
+
+    OIC_LOG(INFO, TAG, "GET Response payload:");
+    OIC_LOG_PAYLOAD(INFO, client_response->payload);
+
+    if(//GAR client_response->rcvdVendorSpecificHeaderOptions &&
+            client_response->numRcvdVendorSpecificHeaderOptions > 0 )
+    {
+        OIC_LOG_V(INFO, TAG, "Received %d vendor specific options",
+		  client_response->numRcvdVendorSpecificHeaderOptions);
+        uint8_t i = 0;
+        OCHeaderOption * rcvdOptions = client_response->rcvdVendorSpecificHeaderOptions;
+        for( i = 0; i < client_response->numRcvdVendorSpecificHeaderOptions; i++)
+        {
+	    printf("Option %d: Protocol ID=%d, Option ID=%u\n", i,
+		   ((OCHeaderOption)rcvdOptions[i]).protocolID,
+		   ((OCHeaderOption)rcvdOptions[i]).optionID);
+            if(((OCHeaderOption)rcvdOptions[i]).protocolID == OC_COAP_ID)
+            {
+                OIC_LOG_V(INFO, TAG, "Received option with OC_COAP_ID and ID %u with",
+                        ((OCHeaderOption)rcvdOptions[i]).optionID );
+
+                OIC_LOG_BUFFER(INFO, TAG, ((OCHeaderOption)rcvdOptions[i]).optionData,
+                    MAX_HEADER_OPTION_DATA_LENGTH);
+            }
+        }
+    }
+    waiting = 0;		/* tell ui thread we're done */
+    return OC_STACK_DELETE_TRANSACTION;
 }
 
 /* ****************************************************************
@@ -386,7 +469,7 @@ int discover_platform(OCQualityOfService qos)
     OCCallbackData cbData;
     char query_uri[64] = { 0 };
 
-    snprintf(query_uri, sizeof (query_uri) - 1, PLATFORM_DISCOVERY_QUERY, discoveryAddr);
+    snprintf(query_uri, sizeof (query_uri) - 1, RSC_URI_PLATFORM, discoveryAddr);
 
     cbData.cb = svc_platform_discovery_response;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
@@ -400,7 +483,7 @@ int discover_platform(OCQualityOfService qos)
     {
         OIC_LOG(ERROR, TAG, "OCStack device error");
     }
-
+    waiting = 1;		/* tell ui we're awaiting a response */
     return ret;
 }
 
@@ -424,12 +507,13 @@ int discover_device(OCQualityOfService qos)
     {
         OIC_LOG(ERROR, TAG, "OCStack device error");
     }
-
+    waiting = 1;		/* tell ui we're awaiting a response */
     return ret;
 }
 
 int discover_resources(OCQualityOfService qos)
 {
+    OC_UNUSED(qos);
     OCStackResult ret;
     OCCallbackData cbData;
     char query_uri[200];
@@ -469,44 +553,115 @@ int discover_resources(OCQualityOfService qos)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
+    waiting = 1;		/* tell ui we're awaiting a response */
+    return ret;
+}
+
+char* dev_addr_to_string(OCDevAddr* devaddr)
+{
+    return devaddr->addr;
+}
+
+int get_resource(OCQualityOfService qos)
+{
+    OCStackResult ret;
+    char query_uri[200];
+    /* char ipaddr[100] = { '\0' }; */
+
+    snprintf(query_uri, sizeof (RSC_URI_TEMPERATURE), RSC_URI_TEMPERATURE);
+
+    OIC_LOG_V (INFO, TAG, "Sending OC_REST_GET request to '%s' with query uri : %s",
+	       dev_addr_to_string(&device_address),
+	       query_uri);
+
+    ret = send_oic_messsage(OC_REST_GET,
+			    &device_address,
+			    query_uri,
+			    NULL, /* OCPayload* */
+			    (qos == OC_HIGH_QOS)? OC_HIGH_QOS : OC_LOW_QOS,
+			    svc_get_response);
+    if (ret != OC_STACK_OK)
+    {
+        OIC_LOG(ERROR, TAG, "OCStack device error");
+    }
+    waiting = 1;		/* tell ui we're awaiting a response */
+    return ret;
+}
+
+int get_pstat(OCQualityOfService qos)
+{
+    OCStackResult ret;
+    char query_uri[200];
+    /* char ipaddr[100] = { '\0' }; */
+
+    snprintf(query_uri, sizeof (RSC_URI_PSTAT), RSC_URI_PSTAT);
+
+    OIC_LOG_V (INFO, TAG, "Sending OC_REST_GET request to '%s' with query uri : %s",
+	       dev_addr_to_string(&device_address),
+	       query_uri);
+
+    ret = send_oic_messsage(OC_REST_GET,
+			    &device_address,
+			    query_uri,
+			    NULL, /* OCPayload* */
+			    (qos == OC_HIGH_QOS)? OC_HIGH_QOS : OC_LOW_QOS,
+			    svc_get_response);
+    if (ret != OC_STACK_OK)
+    {
+        OIC_LOG(ERROR, TAG, "OCStack device error");
+    }
+    waiting = 1;		/* tell ui we're awaiting a response */
     return ret;
 }
 
 void *prompt_user(void * arg)
 {
-  char action[1];
-  struct timespec ts = { .tv_sec = 0,
-			 .tv_nsec = 100000000L };
+    OC_UNUSED(arg);
+    char action[1];
+    struct timespec ts = { .tv_sec = 0,
+			   .tv_nsec = 100000000L };
 
-  while(!gQuitFlag) {
-    if (waiting)
-      nanosleep(&ts, NULL);
-    else {
-      printf("\nChoose an action: 1) Platform discovery  2) Device discovery  3) Resource discovery q) Quit\n");
-      scanf("%s", (char*)&action);
-      switch(*action) {
-      case '1':
-	discover_platform(OC_LOW_QOS);
-	waiting = 1;
-	break;
-      case '2':
-	discover_device(OC_LOW_QOS);
-	waiting = 1;
-	break;
-      case '3':
-	discover_resources(OC_LOW_QOS);
-	waiting = 1;
-	break;
-      case 'q':
-	gQuitFlag = 1;
-	fflush(stdout);
-	break;
-      default:
-	printf("Unrecognized action: %s\n", action);
-      }
+    while(!gQuitFlag) {
+	if (waiting)
+	    nanosleep(&ts, NULL);
+	else {
+	    printf("\nChoose an action:\n");
+	    printf("\t1) Platform discovery\n\t2) Device discovery\n\t3) Resource discovery\n");
+	    printf("\t4) List resources\n");
+	    printf("\t5) GET /a/temperature\n");
+	    printf("\t6) GET /oic/sec/doxm\n");
+	    printf("\t7) GET /oic/sec/pstat\n");
+	    printf("\tq) Quit\n");
+	    scanf("%s", (char*)&action);
+	    switch(*action) {
+	    case '1':
+		discover_platform(OC_LOW_QOS);
+		break;
+	    case '2':
+		discover_device(OC_LOW_QOS);
+		break;
+	    case '3':
+		discover_resources(OC_LOW_QOS);
+		break;
+	    case '4':
+		print_resource_list();
+		break;
+	    case '5':
+		get_resource(OC_HIGH_QOS);
+		break;
+	    case '7':
+		get_pstat(OC_HIGH_QOS);
+		break;
+	    case 'q':
+		gQuitFlag = 1;
+		fflush(stdout);
+		break;
+	    default:
+		printf("Unrecognized action: %s\n", action);
+	    }
+	}
     }
-  }
-  return NULL;
+    return NULL;
 }
 
 /****************************************************************
@@ -519,8 +674,10 @@ void *prompt_user(void * arg)
  ****************************************************************/
 int main(int argc, char* argv[])
 {
-    int opt = 0;
+    OC_UNUSED(argc);
+    OC_UNUSED(argv);
 
+    /* int opt = 0; */
     /* while ((opt = getopt(argc, argv, "o:s:p:d:u:w:r:j:")) != -1) { */
     /*   switch(opt) { */
     /*   case 'o': */

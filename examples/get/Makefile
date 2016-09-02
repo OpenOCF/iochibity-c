@@ -6,28 +6,25 @@
 
 # STAGE: debug or release
 
-#CFLAGS = -g -std=c11 -m64 -fPIC -Wall -Wextra -DTB_LOG $(SYSCFLAGS) $(MYCFLAGS) $(CPATH)
+CFLAGS = -g -std=c11 -m64 -fPIC -Wall -Wextra -DTB_LOG $(SYSCFLAGS) $(MYCFLAGS) $(CPATH)
+
 
 # if gcc add  -pthread?
 
-LDFLAGS=$(SYSLDFLAGS) $(MYLDFLAGS)
-LIBS=-lm $(BUILD_SYSROOT) $(MYLIBS)
-
+CPATH    = $(IOT_HEADERS)
+LDFLAGS= $(SYSLDFLAGS) $(MYLDFLAGS) $(IOT_LIBS)
+LIBS= -lm $(SYSLIBS) $(MYLIBS)
 
 AR= ar rcu
 MKDIR= mkdir -p
 RANLIB= ranlib
 RM= rm -f
 
-IOT_LIBPATH=$(INSTALL_SYSROOT)/lib
-
 SYSCFLAGS=
-SYSLDFLAGS=-L${IOT_LIBPATH}
-
-# -dylib_file /usr/local/lib/liboctbstack.dylib:${BUILD_SYSROOT}/liboctbstack.dylib
+SYSLDFLAGS=
 SYSLIBS=
 
-MYCFLAGS=
+MYCFLAGS=-DSECURED=1
 MYLDFLAGS=
 MYLIBS=
 MYOBJS=
@@ -64,30 +61,50 @@ OCCLFLAGS=-DROUTING_EP   # ENDPOINT
 # if target_os in ['darwin', 'ios']:
 # 	jni_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 
+# if target_arch in ['x86']:
+# 	env.AppendUnique(CCFLAGS = ['-m32'])
+# 	env.AppendUnique(LINKFLAGS = ['-m32'])
+# elif target_arch in ['x86_64']:
+# 	env.AppendUnique(CCFLAGS = ['-m64'])
+# 	env.AppendUnique(LINKFLAGS = ['-m64'])
+# elif target_arch in ['arm'] or target_arch.find('v5') > 0:
+# 	env.AppendUnique(CPPFLAGS = ['-march=armv5te'])
+# elif target_arch.find('v7a-hard') > 0:
+# 	env.AppendUnique(CPPFLAGS = ['-march=armv7-a'])
+# 	env.AppendUnique(CPPFLAGS = ['-mfloat-abi=hard'])
+# 	env.AppendUnique(CCFLAGS = ['-mfloat-abi=hard'])
+# 	env.AppendUnique(LINKFLAGS = ['-mfloat-abi=hard'])
+# elif target_arch.find('v7a') > 0:
+# 	env.AppendUnique(CPPFLAGS = ['-march=armv7-a'])
+# elif target_arch.find('arm64') >= 0:
+# 	env.AppendUnique(CPPFLAGS = ['-march=armv8-a'])
+
+
 IOT_HEADERS= -I. \
 	-I./src \
 	-I${IOTIVITY_HOME}/resource/csdk/cbor \
 	-I${IOTIVITY_HOME}/resource/csdk/connectivity/api \
+	-I${IOTIVITY_HOME}/resource/include \
 	-I${IOTIVITY_HOME}/resource/c_common \
-	-I${IOTIVITY_HOME}/resource/csdk/stack \
-	-I${IOTIVITY_HOME}/resource/csdk/logger \
+	-I${IOTIVITY_HOME}/resource/c_common/oic_malloc/include \
+	-I${IOTIVITY_HOME}/resource/c_common/oic_string/include \
+	-I${IOTIVITY_HOME}/resource/csdk/stack/include \
+	-I${IOTIVITY_HOME}/resource/csdk/ocsocket/include \
+	-I${IOTIVITY_HOME}/resource/csdk/logger/include \
+	-I${IOTIVITY_HOME}/extlibs/boost/boost_1_58_0 \
+	-I${IOTIVITY_HOME}/build_common/android/compatibility \
 	-I${IOTIVITY_HOME}/resource/csdk/security/provisioning/include \
 	-I${IOTIVITY_HOME}/resource/csdk/security/provisioning/include/internal \
 	-I${IOTIVITY_HOME}/resource/csdk/security/include \
 	-I${IOTIVITY_HOME}/resource/csdk/connectivity/lib/libcoap-4.1.1
-
-	# -I${IOTIVITY_HOME}/resource/include \
-	# -I${IOTIVITY_HOME}/extlibs/boost/boost_1_58_0 \
-	# -I${IOTIVITY_HOME}/resource/../build_common/android/compatibility \
-
-
-CPPFLAGS+=${IOT_HEADERS}
 
 	# -I${IOTIVITY_HOME}/resource/../tinycbor/tinycbor/src \
 #	-I${IOTIVITY_HOME}/resource/csdk/security/provisioning/include/oxm \
 #	# -I${IOTIVITY_HOME}/resource/c_common/oic_string/include \
 #	# -I${IOTIVITY_HOME}/resource/c_common/oic_malloc/include \
 
+
+IOT_LIBPATH=$(IOTIVITY_HOME)/out/$(IOTIVITY_TARGET_OS)/$(IOTIVITY_TARGET_ARCH)/$(IOTIVITY_STAGE)
 
 # IOT_LIBS = $(IOT_LIBPATH)/liboctbstack.a \
 # 	$(IOT_LIBPATH)/libc_common.a \
@@ -98,37 +115,35 @@ CPPFLAGS+=${IOT_HEADERS}
 # 	-loctbstack \
 # 	-lpthread
 
-LDLIBS += \
+IOT_LIBS = \
 	-lm \
 	-loctbstack \
 	-locsrm \
 	-lc_common \
+	-llogger \
+	-loc_logger \
+	-loc \
 	-lconnectivity_abstraction \
 	-lroutingmanager \
 	-lcoap \
 	-lpthread
 
-#FIXME: add tinydtls if SECURED=1
-	# -ltinydtls
-
-	# -llogger \
-	# -loc_logger \
-	# -loc \
-
-
 # $(IOT_LIBPATH)/libconnectivity_abstraction.a \
 
-all: client server
 
-server:  server.o button.o led.o
+all: server client
 
-#	$(CC) -o server $(CFLAGS) -L. -L$(IOT_LIBPATH) button.o led.o server.o $(LDFLAGS)
+server:  server.o temperature.o utils.o
+	$(CC) -o server $(CFLAGS) -L. -L$(IOT_LIBPATH) temperature.o utils.o server.o $(LDFLAGS)
 
-#server.o:  server.c server.h
+server.o:  server.c server.h
+	$(CC) $(CFLAGS) $(CPATH) -c server.c
 
-#	$(CC) $(CFLAGS) $(CPATH) -c server.c
+client:  client.o utils.o
+	$(CC) -o client $(CFLAGS) -L. -L$(IOT_LIBPATH) utils.o client.o $(LDFLAGS)
 
-client:  client.o
+client.o:  client.c client.h
+	$(CC) $(OCCLFLAGS) $(CFLAGS) $(CPATH) -c client.c
 
 clean:
 	$(RM) server client *.o

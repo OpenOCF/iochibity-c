@@ -952,9 +952,9 @@ OCStackResult SetDeviceInfo(const char* deviceName, const char* specVersion, con
 
 static void PrintUsage()
 {
-    OIC_LOG(INFO, TAG, "Usage : ocserver -o <0|1>");
-    OIC_LOG(INFO, TAG, "-o 0 : Notify all observers");
-    OIC_LOG(INFO, TAG, "-o 1 : Notify list of observers");
+    printf("Usage : ocserver -o <0|1>\n");
+    printf("\t-o 0 : Notify all observers\n");
+    printf("\t-o 1 : Notify list of observers\n");
 }
 
 #ifdef RA_ADAPTER

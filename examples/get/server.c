@@ -25,31 +25,40 @@
 #include <signal.h>
 #include <pthread.h>
 
-#include "server.h"
-#include "types.h"
-#include "button.h"
-#include "led.h"
-#include "temperature.h"
+#include "logger.h"
+#include "payload_logging.h"
 
-#define TAG "minserver"
+#include "server.h"
+#include "temperature.h"
+#include "utils.h"
+
+#define TAG "GET server"
+
+pthread_t pt_work;
 
 /* Platform Descriptor: OCPlatformInfo
  * This structure describes the platform properties. All non-Null properties will be
  * included in a platform discovery request. */
 OCPlatformInfo platform_info =
   {
-    .platformID			= "minPlatformID",
-    .manufacturerName		= "minName",
-    .manufacturerUrl		= "minManufacturerUrl",
-    .modelNumber		= "minModelNumber",
-    .dateOfManufacture		= "minDateOfManufacture",
-    .platformVersion		= "minPlatformVersion",
-    .operatingSystemVersion	= "minOS",
-    .hardwareVersion		= "minHardwareVersion",
-    .firmwareVersion		= "minFirmwareVersion",
-    .supportUrl			= "minSupportUrl",
+    .platformID			= "Iochibity-GET-Test",
+    .manufacturerName		= "Iochibity",
+    .manufacturerUrl		= "example.org",
+    .modelNumber		= "1.0",
+    .dateOfManufacture		= "01-01-2016",
+    .platformVersion		= "0.1.0",
+    .operatingSystemVersion	= "11.5",
+    .hardwareVersion		= "0.1.0",
+    .firmwareVersion		= "0.1.0",
+    .supportUrl			= "example.org/support",
     .systemTime			= "2015-05-15T11.04"
   };
+
+static struct rsvp_temperature my_temperature_rsvp = { .t     = RSC_T_TEMPERATURE,
+						.iface = RSC_IF_TEMPERATURE,
+						.uri   = RSC_URI_TEMPERATURE,
+						.props = { .state = 0 },
+						.dispatch_request = temperature_request_dispatcher };
 
 /* Device Descriptor: OCDeviceInfo
  * This structure is expected as input for device properties.
@@ -59,8 +68,8 @@ OCDeviceInfo device_info =
   {
     .deviceName = "minDeviceName",
     /* OCStringLL *types; */
-    .specVersion = "0.1.0", /* device specification version */
-    /* OCStringLL *dataModelVersions = null; */
+    .specVersion = "minDeviceSpecVersion" /* device specification version */
+    // .dataModelVersions = "minDeviceModelVersion"
   };
 
 /* const char *deviceUUID = "myDeviceUUID"; */
@@ -72,8 +81,12 @@ default_request_dispatcher (OCEntityHandlerFlag flag,
 			    char *uri,
 			    void *cb /*callbackParam*/)
 {
+    OC_UNUSED(flag);
+    OC_UNUSED(oic_request);
+    OC_UNUSED(uri);
+    OC_UNUSED(cb);
     OCEntityHandlerResult ehResult = OC_EH_OK;
-    OCEntityHandlerResponse response;
+    /* OCEntityHandlerResponse response; */
     return ehResult;
 }
 
@@ -84,8 +97,6 @@ observers_t interestedObservers[SAMPLE_MAX_NUM_OBSERVATIONS];
 
 pthread_t threadId_observe;
 /* pthread_t threadId_presence; */
-
-static bool observeThreadStarted = false;
 
 /* #ifdef WITH_PRESENCE */
 /* #define numPresenceResources (2) */
@@ -98,13 +109,35 @@ void handleSigInt(int signum)
 {
     if (signum == SIGINT)
     {
+	/* if (OCStop() != OC_STACK_OK) { */
+	/*     printf("OCStack process error\n"); */
+	/* } else { */
+	/*     printf("foo\n"); */
+	/* } */
         gQuitFlag = 1;
     }
 }
 
+/* thread routine - service client requests */
+void *troutine_work(void *arg)
+{
+    OC_UNUSED(arg);
+    printf("Entering server work thread...\n");
+
+    while (!gQuitFlag) {
+	if (OCProcess() != OC_STACK_OK) {
+	    printf("OCStack process error\n");
+	}
+    }
+    printf("Exiting server work thread...\n");
+    /* we're the only thread left, pthread_exit(NULL) would kill us,
+       but not the process. */
+    exit(0);
+}
+
 static void PrintUsage()
 {
-    printf("Usage : server -o <0|1>\n");
+    printf("Usage : ocserver -o <0|1>\n");
     printf("-o 0 : Notify all observers\n");
     printf("-o 1 : Notify list of observers\n");
 }
@@ -116,34 +149,35 @@ static void PrintUsage()
  *  3. register device info
  *  4. register service routine for default rsvp
  *  5. register Resource Service Provider for each resource
- *  6. enter processing loop
+ *  6. spawn work thread
+ *  7. exit main thread, leaving process (and work thread) running
  ****************************************************************/
 int main(int argc, char* argv[])
 {
-    int opt = 0;
+    /* pthread_t pt_main = pthread_self(); */
 
-    while ((opt = getopt(argc, argv, "o:s:p:d:u:w:r:j:")) != -1) {
-      switch(opt) {
-      case 'o':
-	g_observe_notify_type = atoi(optarg);
-	break;
-      default:
-	PrintUsage();
-	return -1;
-      }
-    }
+    /* int opt = 0; */
 
-    if ((g_observe_notify_type != 0) && (g_observe_notify_type != 1)) {
-        PrintUsage();
-        return -1;
-    }
+    /* while ((opt = getopt(argc, argv, "o:s:p:d:u:w:r:j:")) != -1) { */
+    /*   switch(opt) { */
+    /*   case 'o': */
+    /* 	g_observe_notify_type = atoi(optarg); */
+    /* 	break; */
+    /*   default: */
+    /* 	PrintUsage(); */
+    /* 	return -1; */
+    /*   } */
+    /* } */
 
-    OIC_LOG(DEBUG, TAG, "Server is starting...");
+    /* if ((g_observe_notify_type != 0) && (g_observe_notify_type != 1)) { */
+    /*     PrintUsage(); */
+    /*     return -1; */
+    /* } */
 
     OCStackResult op_result;
 
     /* 1. initialize */
-    op_result = OCInit(NULL, 0, OC_SERVER);
+    op_result = OCInit(NULL, 0, OC_CLIENT_SERVER);
     if (op_result != OC_STACK_OK) {
         printf("OCStack init error\n");
         return 0;
@@ -151,8 +185,18 @@ int main(int argc, char* argv[])
 
     /* 2. register platform info */
     op_result = OCSetPlatformInfo(platform_info);
-    if (op_result != OC_STACK_OK) {
-        printf("Platform Registration failed!\n");
+    if (op_result == OC_STACK_OK) {
+        OIC_LOG(INFO, TAG, "Platform Registration succeeded\n");
+	OCPlatformInfo* pi;
+	if ( OCGetPlatformInfo(&pi) == OC_STACK_OK ) {
+	    OIC_LOG(INFO, TAG, "OCGetPlatformInfo success\n");
+	    print_platform_info(pi);
+	} else {
+	    OIC_LOG(ERROR, TAG, "OCGetPlatformInfo failure\n");
+	    exit (EXIT_FAILURE);
+	}
+    } else {
+        OIC_LOG(ERROR, TAG, "Platform Registration failed!\n");
         exit (EXIT_FAILURE);
     }
 
@@ -172,84 +216,21 @@ int main(int argc, char* argv[])
     }
 
     /* 5. register rsvps */
-    struct rsvp_led my_led_rsvp = { .t     = RSC_T_LED,
-				    .iface = RSC_IF_LED,
-				    .uri   = RSC_URI_LED,
-				    .props = { .state = 0, .power = 0 },
-				    .dispatch_request = led_request_dispatcher };
-
-    rmgr_register_led_rsvp (&my_led_rsvp);
-    if (op_result != OC_STACK_OK) {
-      printf("LED resource service provider registration failed!\n");
-      exit (EXIT_FAILURE);
-    }
-
-    struct rsvp_button my_button_rsvp = { .t     = RSC_T_BUTTON,
-					  .iface = RSC_IF_BUTTON,
-					  .uri   = RSC_URI_BUTTON,
-					  .props = { .state = 0 },
-					  .dispatch_request = button_request_dispatcher };
-
-    rmgr_register_button_rsvp (&my_button_rsvp);
-    if (op_result != OC_STACK_OK) {
-      printf("BUTTON resource service provider registration failed!\n");
-      exit (EXIT_FAILURE);
-    }
-    rmgr_register_temperature_rsvp (&my_temperature_rsvp);
+    op_result = rmgr_register_temperature_rsvp (&my_temperature_rsvp);
     if (op_result != OC_STACK_OK) {
       printf("TEMPERATURE resource service provider registration failed!\n");
       exit (EXIT_FAILURE);
+    } else {
+      printf("TEMPERATURE resource service provider registration succeeded!\n");
     }
 
-    // Initialize observations data structure for the resource
-    /* for (uint8_t i = 0; i < SAMPLE_MAX_NUM_OBSERVATIONS; i++) */
-    /* { */
-    /*     interestedObservers[i].valid = false; */
-    /* } */
-
-
-    /*
-     * Create a thread for generating changes that cause presence notifications
-     * to be sent to clients
-     */
-
-    /* #ifdef WITH_PRESENCE */
-    /* pthread_create(&threadId_presence, NULL, presenceNotificationGenerator, (void *)NULL); */
-    /* #endif */
-
-    // Break from loop with Ctrl-C
-    printf("Entering server main loop...\n");
-
-    /* DeletePlatformInfo(); */
-    /* DeleteDeviceInfo(); */
-
+    /* register async quit signal handler */
     signal(SIGINT, handleSigInt);
 
-    while (!gQuitFlag)
-    {
-        if (OCProcess() != OC_STACK_OK)
-        {
-            printf("OCStack process error\n");
-            return 0;
-        }
-    }
+    pthread_create (&pt_work, NULL, troutine_work, (void *)NULL);
 
-    /* if (observeThreadStarted) */
-    /* { */
-    /*     pthread_cancel(threadId_observe); */
-    /*     pthread_join(threadId_observe, NULL); */
-    /* } */
-
-    /* pthread_cancel(threadId_presence); */
-    /* pthread_join(threadId_presence, NULL); */
-
-    printf("Exiting server main loop...\n");
-
-    if (OCStop() != OC_STACK_OK)
-    {
-        printf("OCStack process error\n");
-    }
-
-    return 0;
+    /* main thread has nothing to do. by calling pthread_exit it exits
+       but the process continues, so any spawned threads do too. */
+    pthread_exit(NULL);
 }
 
