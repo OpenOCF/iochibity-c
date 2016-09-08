@@ -10,7 +10,7 @@ equivalent or similar code in C.
 
 == docs
 
-cod/operations.adoc has a concise summary of the kernel C API.
+doc/operations.adoc has a concise summary of the kernel C API.
 
 == examples
 
