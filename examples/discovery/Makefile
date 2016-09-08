@@ -101,13 +101,13 @@ CPPFLAGS+=${IOT_HEADERS}
 LDLIBS += \
 	-lm \
 	-loctbstack \
-	-locsrm \
 	-lc_common \
 	-lconnectivity_abstraction \
 	-lroutingmanager \
 	-lcoap \
 	-lpthread
 
+	# -locsrm \
 #FIXME: add tinydtls if SECURED=1
 	# -ltinydtls
 

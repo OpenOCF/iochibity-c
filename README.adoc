@@ -1,6 +1,13 @@
 # iotivity-c
 Iotivity C SDK
 
+
+NOTE: STATUS: not very far along.  The focus right now is on creating
+a suite of 100% C demo programs; currently example/get seems to work,
+example/discovery mostly works, the other stuff is pulled from the C++
+examples in /resource/csdk/stack/samples, in hopes of writing
+equivalent or similar code in C.
+
 == docs
 
 cod/operations.adoc has a concise summary of the kernel C API.

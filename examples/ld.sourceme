@@ -1,0 +1,7 @@
+# source me /after/ sourcing devhost and target host sourcefiles
+
+#darwin
+export DYLD_LIBRARY_PATH=${INSTALL_SYSROOT}/lib
+
+#linux
+#export LD_LIBRARY_PATH=${INSTALL_SYSROOT}/lib
