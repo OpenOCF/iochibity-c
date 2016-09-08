@@ -24,7 +24,7 @@ SYSCFLAGS=
 SYSLDFLAGS=
 SYSLIBS=
 
-MYCFLAGS=-DSECURED=1
+MYCFLAGS=
 MYLDFLAGS=
 MYLIBS=
 MYOBJS=
@@ -41,70 +41,38 @@ OCCLFLAGS=-DROUTING_EP   # ENDPOINT
 
 # -D_DARWIN_C_SOURCE -DWITH_POSIX -D__darwin__
 
-#-DHAVE_PTHREADS 
+#-DHAVE_PTHREADS
  # -DHAVE_GETTIMEOFDAY
 
 # ifeq ($(SECURED), 1)
 #     IOTLIBS += "-ltinydtls -locprovision -locpmapi"
 # endif
 
-# if target_os == 'linux':
-#    shlibsuffix = '.so'
-#    jnilibsuffix = '.so'
-# elif target_os == 'darwin':
-#    shlibsuffix = '.dylib'
-#    jnilibsuffix = '.jnilib'
-# elif target_os == 'win32':
-#    shlibsuffix = '.dll'
-#    jnilibsuffix = '.dll'
-
-# if target_os in ['darwin', 'ios']:
-# 	jni_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
-
-# if target_arch in ['x86']:
-# 	env.AppendUnique(CCFLAGS = ['-m32'])
-# 	env.AppendUnique(LINKFLAGS = ['-m32'])
-# elif target_arch in ['x86_64']:
-# 	env.AppendUnique(CCFLAGS = ['-m64'])
-# 	env.AppendUnique(LINKFLAGS = ['-m64'])
-# elif target_arch in ['arm'] or target_arch.find('v5') > 0:
-# 	env.AppendUnique(CPPFLAGS = ['-march=armv5te'])
-# elif target_arch.find('v7a-hard') > 0:
-# 	env.AppendUnique(CPPFLAGS = ['-march=armv7-a'])
-# 	env.AppendUnique(CPPFLAGS = ['-mfloat-abi=hard'])
-# 	env.AppendUnique(CCFLAGS = ['-mfloat-abi=hard'])
-# 	env.AppendUnique(LINKFLAGS = ['-mfloat-abi=hard'])
-# elif target_arch.find('v7a') > 0:
-# 	env.AppendUnique(CPPFLAGS = ['-march=armv7-a'])
-# elif target_arch.find('arm64') >= 0:
-# 	env.AppendUnique(CPPFLAGS = ['-march=armv8-a'])
-
-
 IOT_HEADERS= -I. \
 	-I./src \
+	-I${INSTALL_SYSROOT}/include \
 	-I${IOTIVITY_HOME}/resource/csdk/cbor \
 	-I${IOTIVITY_HOME}/resource/csdk/connectivity/api \
-	-I${IOTIVITY_HOME}/resource/include \
 	-I${IOTIVITY_HOME}/resource/c_common \
-	-I${IOTIVITY_HOME}/resource/c_common/oic_malloc/include \
-	-I${IOTIVITY_HOME}/resource/c_common/oic_string/include \
-	-I${IOTIVITY_HOME}/resource/csdk/stack/include \
-	-I${IOTIVITY_HOME}/resource/csdk/ocsocket/include \
-	-I${IOTIVITY_HOME}/resource/csdk/logger/include \
-	-I${IOTIVITY_HOME}/extlibs/boost/boost_1_58_0 \
-	-I${IOTIVITY_HOME}/build_common/android/compatibility \
+	-I${IOTIVITY_HOME}/resource/c_common \
+	-I${IOTIVITY_HOME}/resource/c_common \
+	-I${IOTIVITY_HOME}/resource/csdk/stack \
+	-I${IOTIVITY_HOME}/resource/csdk/logger \
 	-I${IOTIVITY_HOME}/resource/csdk/security/provisioning/include \
 	-I${IOTIVITY_HOME}/resource/csdk/security/provisioning/include/internal \
-	-I${IOTIVITY_HOME}/resource/csdk/security/include \
+	-I${IOTIVITY_HOME}/resource/csdk/security \
 	-I${IOTIVITY_HOME}/resource/csdk/connectivity/lib/libcoap-4.1.1
 
+	# -I${IOTIVITY_HOME}/extlibs/boost/boost_1_58_0 \
+	# -I${IOTIVITY_HOME}/build_common/android/compatibility \
+
 	# -I${IOTIVITY_HOME}/resource/../tinycbor/tinycbor/src \
-#	-I${IOTIVITY_HOME}/resource/csdk/security/provisioning/include/oxm \
+I#	-I${IOTIVITY_HOME}/resource/csdk/security/provisioning/include/oxm \
 #	# -I${IOTIVITY_HOME}/resource/c_common/oic_string/include \
 #	# -I${IOTIVITY_HOME}/resource/c_common/oic_malloc/include \
 
 
-IOT_LIBPATH=$(IOTIVITY_HOME)/out/$(IOTIVITY_TARGET_OS)/$(IOTIVITY_TARGET_ARCH)/$(IOTIVITY_STAGE)
+IOT_LIBPATH=${INSTALL_SYSROOT}/lib
 
 # IOT_LIBS = $(IOT_LIBPATH)/liboctbstack.a \
 # 	$(IOT_LIBPATH)/libc_common.a \
@@ -118,15 +86,18 @@ IOT_LIBPATH=$(IOTIVITY_HOME)/out/$(IOTIVITY_TARGET_OS)/$(IOTIVITY_TARGET_ARCH)/$
 IOT_LIBS = \
 	-lm \
 	-loctbstack \
-	-locsrm \
 	-lc_common \
 	-llogger \
-	-loc_logger \
-	-loc \
 	-lconnectivity_abstraction \
 	-lroutingmanager \
 	-lcoap \
 	-lpthread
+
+# if SECURED == 1
+	# -locsrm \
+
+	# -loc_logger \
+	# -loc \
 
 # $(IOT_LIBPATH)/libconnectivity_abstraction.a \
 
