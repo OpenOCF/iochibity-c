@@ -102,7 +102,7 @@ void rmgr_register_led_rsvp (struct rsvp_led *rsvp)
 				 rsvp->uri,
 				 rsvp->dispatch_request,
 				 NULL,
-				 OC_DISCOVERABLE|OC_OBSERVABLE);
+				 OC_DISCOVERABLE|OC_OBSERVABLE | OC_SECURE);
     if (op_result != OC_STACK_OK)
     {
         printf("LED resource service provider registration failed!\n");

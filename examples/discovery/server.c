@@ -32,6 +32,8 @@
 
 #define TAG "minserver"
 
+static char CRED_FILE[] = "discovery.d/oic_svr_db_server_justworks.dat";
+
 pthread_t pt_work;
 
 /* Platform Descriptor: OCPlatformInfo
@@ -129,11 +131,11 @@ void *troutine_work(void *arg)
     exit(0);
 }
 
-/* FILE* server_fopen(const char *path, const char *mode) */
-/* { */
-/*     (void)path; */
-/*     return fopen(CRED_FILE, mode); */
-/* } */
+FILE* server_fopen(const char *path, const char *mode)
+{
+    (void)path;
+    return fopen(CRED_FILE, mode);
+}
 
 static void PrintUsage()
 {
@@ -178,8 +180,8 @@ int main(int argc, char* argv[])
 
     /* /\* 0. if SECURED == 1 *\/ */
     /* // Initialize Persistent Storage for SVR database */
-    /* OCPersistentStorage ps = { server_fopen, fread, fwrite, fclose, unlink }; */
-    /* OCRegisterPersistentStorageHandler(&ps); */
+    OCPersistentStorage ps = { server_fopen, fread, fwrite, fclose, unlink };
+    OCRegisterPersistentStorageHandler(&ps);
 
     /* 1. initialize */
     op_result = OCInit(NULL, 0, OC_SERVER);

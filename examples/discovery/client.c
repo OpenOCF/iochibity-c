@@ -320,6 +320,7 @@ OCStackApplicationResult svc_device_discovery_response(void* ctx,
 						       OCDoHandle handle,
 						       OCClientResponse * clientResponse)
 {
+    OIC_LOG_V(INFO, TAG, "%s: ENTRY", __func__);
     if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
     {
         OIC_LOG(INFO, TAG, "DEVICE DISCOVERY callback context: success");
@@ -349,6 +350,8 @@ OCStackApplicationResult svc_resource_discovery_response(void *ctx,
 							 OCDoHandle handle,
 							 OCClientResponse *clientResponse)
 {
+    OIC_LOG_V(DEBUG, TAG, "%s: ENTRY", __func__);
+
     if (ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
         OIC_LOG(INFO, TAG, "RESOURCE DISCOVERY callback context: success");
@@ -372,8 +375,8 @@ OCStackApplicationResult svc_resource_discovery_response(void *ctx,
     }
 
     waiting = 0;		/* tell ui thread we're done */
-    return (UnicastDiscovery) ?
-           OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION ;
+    OIC_LOG_V(DEBUG, TAG, "%s: EXIT", __func__);
+    return (UnicastDiscovery) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION ;
 }
 
 /* ****************************************************************

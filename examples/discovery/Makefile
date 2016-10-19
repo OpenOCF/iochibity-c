@@ -8,6 +8,8 @@
 
 #CFLAGS = -g -std=c11 -m64 -fPIC -Wall -Wextra -DTB_LOG $(SYSCFLAGS) $(MYCFLAGS) $(CPATH)
 
+CFLAGS += -DTB_LOG
+
 # if gcc add  -pthread?
 
 LDFLAGS=$(SYSLDFLAGS) $(MYLDFLAGS)
@@ -100,12 +102,13 @@ CPPFLAGS+=${IOT_HEADERS}
 
 LDLIBS += \
 	-lm \
-	-loctbstack \
-	-lc_common \
-	-lconnectivity_abstraction \
-	-lroutingmanager \
-	-lcoap \
+	-lchibity \
 	-lpthread
+
+	# -lc_common \
+	# -lconnectivity_abstraction \
+	# -lroutingmanager \
+	# -lcoap \
 
 	# -locsrm \
 #FIXME: add tinydtls if SECURED=1

@@ -1,0 +1,128 @@
+{
+    "acl": {
+        "aclist": {
+            "aces": [
+                {
+                    "subjectuuid": "*",
+                    "resources": [
+                        {
+                            "href": "/oic/res",
+                            "rel": "",
+                            "rt": ["oic.wk.res"],
+                            "if": ["oic.if.ll"]
+                        },{
+                            "href": "/oic/d",
+                            "rel": "",
+                            "rt": ["oic.wk.d"],
+                            "if": ["oic.if.baseline", "oic.if.r"]
+                        },{
+                            "href": "/oic/p",
+                            "rel": "",
+                            "rt": ["oic.wk.p"],
+                            "if": ["oic.if.baseline", "oic.if.r"]
+                        }
+                    ],
+                    :permission :retrieve ;; 2
+                },
+                {
+                    "subjectuuid": "*",
+                    "resources": [
+                        {
+                            "href": "/oic/sec/doxm",
+                            "rel": "",
+                            "rt": ["oic.r.doxm"],
+                            "if": ["oic.if.baseline"]
+                        },
+                        {
+                            "href": "/oic/sec/pstat",
+                            "rel": "",
+                            "rt": ["oic.r.pstat"],
+                            "if": ["oic.if.baseline"]
+                        },
+                        {
+                            "href": "/oic/sec/acl",
+                            "rel": "",
+                            "rt": ["oic.r.acl"],
+                            "if": ["oic.if.baseline"]
+                        },
+                        {
+                            "href": "/oic/sec/cred",
+                            "rel": "",
+                            "rt": ["oic.r.cred"],
+                            "if": ["oic.if.baseline"]
+                        }
+                    ],
+                    :permission :retrieve-update ;; 6
+                },
+                {
+                    "subjectuuid": "*",
+                    "resources": [
+                        {
+                            "href": "/oic/sec/pconf",
+                            "rel": "",
+                            "rt": ["oic.r.pconf"],
+                            "if": ["oic.if.baseline"]
+                        },
+                        {
+                            "href": "/oic/sec/dpairing",
+                            "rel": "",
+                            "rt": ["oic.r.dpairing"],
+                            "if": ["oic.if.baseline"]
+                        }
+                    ],
+                    :permission :retrieve-update ;; 6
+                },
+                {
+                    "subjectuuid": "*",
+                    "resources": [
+                        {
+                            "href": "/oic/sec/ver",
+                            "rel": "",
+                            "rt": ["oic.r.ver"],
+                            "if": ["oic.if.baseline"]
+                        }
+                    ],
+                    :permission :retrieve ;; 2
+                }
+            ]
+        },
+        "rowneruuid" : "6A757374-776F-726B-4465-765575696430"
+    },
+ ;; /oic/sec/pstat, table 36, 37, p97
+    :provisioning-status {             ;; "pstat"
+        ;; :on-boarding-state
+        :operational? false            ;; "isop"
+        :device-uuid          "6A757374-776F-726B-4465-765575696430",
+        :resource-owner-uuid  "6A757374-776F-726B-4465-765575696430",
+                          ;; device modes: oic.sec.dpmtype
+        :current-mode :take-owner                ;; "cm": 2
+        :target-mode  :zero                      ;; "tm": 0 = ?
+                          ;; provisioning operational modes: oic.sec.pomtype
+                          ;; tables 42, 43, p. 99:
+                          ;; server-directed:        bx0000.001x
+                          ;; server-directed-multi:  bx0000.0010
+                          ;; server-directed-single: bx0000.0011
+                          ;; client-directed:        bx0000.0100
+        :operational-mode :server-directed-single ;; "om": 3
+        :supported-mode   :server-directed-single ;; "sm": 3
+        }
+ ;; /oic/sec/doxm tables 10,11, p. 79
+    :device-owner-transfer-method {;; "doxm":
+                                   ;; transfer methods: oic.sec.doxmtype, table 13, p. 81
+                                   ;; :just-works 0 (oic.sec.oxm.jw)
+                                   ;; :random-pin 1 (oic.sec.oxm.rdp)
+                                   ;; :mfg-certificate 2 (oic.sec.oxm.mfgcert)
+        :owner-transfer-method [:just-works]        ;; "oxms" [0],
+        :owner-transfer-methed-selected :just-works ;; "oxmsel": 0,
+                                   ;; oic.sec.credtype:
+        :supported-credential-types "sct": 1,
+        :owned false                    ;; "owned": false
+        :device-uuid "6A757374-776F-726B-4465-765575696430" ;; "deviceuuid"
+        ;; :device-id ""                   ;; "deviceid"
+        :device-owner-uuid ""           ;; "devowneruuid": ""
+        ;; :device-owner ""           ;; "devowner"
+        :resource-owner-uuid "6A757374-776F-726B-4465-765575696430" ;; "rowneruuid"
+        :resource-owner ""           ;; "rowner"
+        "x.org.iotivity.dpc" true   ;; ???
+    }
+}
