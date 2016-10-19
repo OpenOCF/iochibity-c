@@ -31,21 +31,29 @@
 #include "ocpayload.h"
 #include "payload_logging.h"
 
-#include "client.h"
+#include "get_client.h"
 #include "temperature.h"
 #include "utils.h"
+
+#include "debug.h"		/* for libcoap debugging */
+#include "tinydtls/debug.h"		/* for tinydtls debugging */
 
 #define TAG "GET client"
 
 #define DEFAULT_CONTEXT_VALUE 0x99
 
-static int UnicastDiscovery = 0;
+static char CRED_FILE[] = "get.d/oic_svr_db_client.dat";
 
-pthread_t ui_thread;
+static int UnicastDiscovery = 0;
 
 static char discoveryAddr[100];
 
 static OCDevAddr device_address;
+
+pthread_t ui_thread;
+
+OCQualityOfService g_qos = OC_LOW_QOS;
+
 //The following variable determines the interface protocol (IPv4, IPv6, etc)
 //to be used for sending unicast messages. Default set to IP dual stack.
 static OCConnectivityType conn_type = CT_ADAPTER_IP;
@@ -170,9 +178,9 @@ void queryResource()
     /*     case TEST_DISCOVER_REQ: */
     /*         break; */
     /*     case TEST_NON_CON_OP: */
-    /*         InitGetRequest(OC_LOW_QOS); */
-    /*         InitPutRequest(OC_LOW_QOS); */
-    /*         InitPostRequest(OC_LOW_QOS); */
+    /*         InitGetRequest(g_qos); */
+    /*         InitPutRequest(g_qos); */
+    /*         InitPostRequest(g_qos); */
     /*         break; */
     /*     case TEST_CON_OP: */
     /*         InitGetRequest(OC_HIGH_QOS); */
@@ -297,7 +305,11 @@ void collectUniqueResource(const OCClientResponse * client_response)
         if (ret == UUID_LENGTH - 1)
         {
 	    if ( strncmp(res->uri, RSC_URI_TEMPERATURE, strnlen(RSC_URI_TEMPERATURE, 14)) == 0 ) {
+		printf("SAVING addr:  %s : %d\n", client_response->devAddr.addr,
+		       res->port);
+		       /* client_response->devAddr.port); */
 		device_address = client_response->devAddr;
+		device_address.port = res->port;
 		conn_type      = client_response->connType;
 	    }
             if(insertResource(sidStr, res->uri, client_response) == 1)
@@ -359,7 +371,6 @@ OCStackApplicationResult svc_device_discovery_response(void* ctx,
     if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
     {
         OIC_LOG(INFO, TAG, "DEVICE DISCOVERY callback context: success");
-	print_client_response_header(client_response);
     }
     else
     {
@@ -368,6 +379,9 @@ OCStackApplicationResult svc_device_discovery_response(void* ctx,
 
     if (client_response)
     {
+        OIC_LOG(INFO, TAG, "DEVICE DISCOVERY response header:");
+	print_client_response_header(client_response);
+        OIC_LOG(INFO, TAG, "DEVICE DISCOVERY response payload:");
         OIC_LOG_PAYLOAD(INFO, client_response->payload);
     }
     else
@@ -383,6 +397,7 @@ OCStackApplicationResult svc_resource_discovery_response(void *ctx,
 							 OCDoHandle handle,
 							 OCClientResponse *client_response)
 {
+    OIC_LOG_V(DEBUG, TAG, "%s: ENTRY", __func__);
     OC_UNUSED(handle);
     if (ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
@@ -405,23 +420,22 @@ OCStackApplicationResult svc_resource_discovery_response(void *ctx,
     }
 
     waiting = 0;		/* tell ui thread we're done */
-    return (UnicastDiscovery) ?
-           OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION ;
+    return OC_STACK_DELETE_TRANSACTION;
 }
 
 OCStackApplicationResult svc_get_response(void* ctx,
 					  OCDoHandle handle,
 					  OCClientResponse* client_response)
 {
+    OIC_LOG_V(DEBUG, TAG, "%s: ENTRY", __func__);
     OC_UNUSED(handle);
     if (ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
-        OIC_LOG(INFO, TAG, "RESOURCE GET callback context: success");
 	print_client_response_header(client_response);
     }
     else
     {
-        OIC_LOG(ERROR, TAG, "RESOURCE GET callback context: failure");
+        OIC_LOG_V(ERROR, TAG, "%s: RESOURCE GET callback context: failure", __func__);
     }
 
     if(client_response == NULL)
@@ -546,7 +560,9 @@ int discover_resources(OCQualityOfService qos)
     ret = OCDoResource(NULL,
 		       OC_REST_DISCOVER,
 		       query_uri,
-		       0, 0, CT_DEFAULT, OC_LOW_QOS,
+		       0,	/* device address */
+		       0,	/* OCPayload */
+		       CT_DEFAULT, OC_LOW_QOS,
 		       &cbData,
 		       NULL, 0);
     if (ret != OC_STACK_OK)
@@ -570,9 +586,10 @@ int get_resource(OCQualityOfService qos)
 
     snprintf(query_uri, sizeof (RSC_URI_TEMPERATURE), RSC_URI_TEMPERATURE);
 
-    OIC_LOG_V (INFO, TAG, "Sending OC_REST_GET request to '%s' with query uri : %s",
-	       dev_addr_to_string(&device_address),
-	       query_uri);
+    device_address.flags = (OCTransportFlags)(device_address.flags|OC_SECURE);
+
+    OIC_LOG_V(INFO, TAG, "%s: Sending OC_REST_GET request to '%s:%d' with query uri : %s",
+	      __func__, device_address.addr, device_address.port, query_uri);
 
     ret = send_oic_messsage(OC_REST_GET,
 			    &device_address,
@@ -614,6 +631,14 @@ int get_pstat(OCQualityOfService qos)
     return ret;
 }
 
+FILE* server_fopen(const char *path, const char *mode)
+{
+    OIC_LOG_V(DEBUG, TAG, "%s: ENTRY, path: %s", __func__, path);
+    (void)path;
+    OIC_LOG_V(DEBUG, TAG, "%s: opening %s", __func__, CRED_FILE);
+    return fopen(CRED_FILE, mode);
+}
+
 void *prompt_user(void * arg)
 {
     OC_UNUSED(arg);
@@ -635,22 +660,22 @@ void *prompt_user(void * arg)
 	    scanf("%s", (char*)&action);
 	    switch(*action) {
 	    case '1':
-		discover_platform(OC_LOW_QOS);
+		discover_platform(g_qos);
 		break;
 	    case '2':
-		discover_device(OC_LOW_QOS);
+		discover_device(g_qos);
 		break;
 	    case '3':
-		discover_resources(OC_LOW_QOS);
+		discover_resources(g_qos);
 		break;
 	    case '4':
 		print_resource_list();
 		break;
 	    case '5':
-		get_resource(OC_HIGH_QOS);
+		get_resource(g_qos);
 		break;
 	    case '7':
-		get_pstat(OC_HIGH_QOS);
+		get_pstat(g_qos);
 		break;
 	    case 'q':
 		gQuitFlag = 1;
@@ -694,17 +719,26 @@ int main(int argc, char* argv[])
     /*     return -1; */
     /* } */
 
-    printf("Client is starting...");
-
     OCStackResult op_result;
+
+    /* optionally: set log level for 3rd-party libs */
+    coap_set_log_level(LOG_DEBUG);
+    dtls_set_log_level(DTLS_LOG_DEBUG);
+
+    printf("Initializing persistent storage manager\n");
+    // Initialize Persistent Storage for SVR database
+    OCPersistentStorage ps = {server_fopen, fread, fwrite, fclose, unlink};
+    OCRegisterPersistentStorageHandler(&ps);
 
     /* 1. initialize */
     /* use default transport flags, so stack will pick a transport */
-    op_result = OCInit1(OC_CLIENT, OC_DEFAULT_FLAGS, OC_DEFAULT_FLAGS);
+    op_result = OCInit(NULL, 0, OC_CLIENT_SERVER);  /* , OC_DEFAULT_FLAGS, OC_DEFAULT_FLAGS); */
     if (op_result != OC_STACK_OK) {
         printf("OCStack init error\n");
         return 0;
     }
+
+    printf("OCStack inititalized; SID: %s\n", OCGetServerInstanceIDString());
 
     /* 2. register platform info */
     /* WARNING: platform registration only allowed for servers */
@@ -715,8 +749,8 @@ int main(int argc, char* argv[])
     /*     exit (EXIT_FAILURE); */
     /* } */
 
-    /* 3. register default device info */
-    /* WARNING: device registration only allowed for servers */
+    /* /\* 3. register default device info *\/ */
+    /* /\* WARNING: device registration only allowed for servers *\/ */
     /* OCResourcePayloadAddStringLL(&device_info.types, "oic.d.tv"); */
     /* op_result = OCSetDeviceInfo(device_info); */
     /* if (op_result != OC_STACK_OK) { */

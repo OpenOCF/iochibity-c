@@ -6,13 +6,16 @@
 
 # STAGE: debug or release
 
-CFLAGS = -g -std=c11 -m64 -fPIC -Wall -Wextra -DTB_LOG $(SYSCFLAGS) $(MYCFLAGS) $(CPATH)
-
+CFLAGS += -DTB_LOG -g
+# -fPIC -Wall -Wextra
 
 # if gcc add  -pthread?
 
-CPATH    = $(IOT_HEADERS)
-LDFLAGS= $(SYSLDFLAGS) $(MYLDFLAGS) $(IOT_LIBS)
+
+
+CPPFLAGS += $(IOT_HEADERS)
+LDFLAGS= $(SYSLDFLAGS) $(MYLDFLAGS)
+LDLIBS= $(IOT_LIBS)
 LIBS= -lm $(SYSLIBS) $(MYLIBS)
 
 AR= ar rcu
@@ -25,7 +28,7 @@ SYSLDFLAGS=
 SYSLIBS=
 
 MYCFLAGS=
-MYLDFLAGS=
+MYLDFLAGS=${IOT_LIBPATH}
 MYLIBS=
 MYOBJS=
 
@@ -54,14 +57,13 @@ IOT_HEADERS= -I. \
 	-I${IOTIVITY_HOME}/resource/csdk/cbor \
 	-I${IOTIVITY_HOME}/resource/csdk/connectivity/api \
 	-I${IOTIVITY_HOME}/resource/c_common \
-	-I${IOTIVITY_HOME}/resource/c_common \
-	-I${IOTIVITY_HOME}/resource/c_common \
 	-I${IOTIVITY_HOME}/resource/csdk/stack \
 	-I${IOTIVITY_HOME}/resource/csdk/logger \
 	-I${IOTIVITY_HOME}/resource/csdk/security/provisioning/include \
 	-I${IOTIVITY_HOME}/resource/csdk/security/provisioning/include/internal \
 	-I${IOTIVITY_HOME}/resource/csdk/security \
-	-I${IOTIVITY_HOME}/resource/csdk/connectivity/lib/libcoap-4.1.1
+	-I${IOTIVITY_HOME}/resource/csdk/connectivity/lib/libcoap-4.1.1 \
+	-I${IOTIVITY_HOME}/extlibs # tinydtls debug.h
 
 	# -I${IOTIVITY_HOME}/extlibs/boost/boost_1_58_0 \
 	# -I${IOTIVITY_HOME}/build_common/android/compatibility \
@@ -72,7 +74,8 @@ I#	-I${IOTIVITY_HOME}/resource/csdk/security/provisioning/include/oxm \
 #	# -I${IOTIVITY_HOME}/resource/c_common/oic_malloc/include \
 
 
-IOT_LIBPATH=${INSTALL_SYSROOT}/lib
+IOT_LIBPATH=-L${INSTALL_SYSROOT}/lib \
+	-L${BUILD_SYSROOT}/logger
 
 # IOT_LIBS = $(IOT_LIBPATH)/liboctbstack.a \
 # 	$(IOT_LIBPATH)/libc_common.a \
@@ -84,15 +87,15 @@ IOT_LIBPATH=${INSTALL_SYSROOT}/lib
 # 	-lpthread
 
 IOT_LIBS = \
-	-lm \
-	-loctbstack \
-	-lc_common \
+	-lchibity \
 	-llogger \
-	-lconnectivity_abstraction \
-	-lroutingmanager \
-	-lcoap \
 	-lpthread
 
+	# -lm \
+	# -lc_common \
+	# -lconnectivity_abstraction \
+	# -lroutingmanager \
+	# -lcoap \
 # if SECURED == 1
 	# -locsrm \
 
@@ -102,21 +105,13 @@ IOT_LIBS = \
 # $(IOT_LIBPATH)/libconnectivity_abstraction.a \
 
 
-all: server client
+all: get_server get_client
 
-server:  server.o temperature.o utils.o
-	$(CC) -o server $(CFLAGS) -L. -L$(IOT_LIBPATH) temperature.o utils.o server.o $(LDFLAGS)
+get_server:  get_server.o temperature.o utils.o
 
-server.o:  server.c server.h
-	$(CC) $(CFLAGS) $(CPATH) -c server.c
-
-client:  client.o utils.o
-	$(CC) -o client $(CFLAGS) -L. -L$(IOT_LIBPATH) utils.o client.o $(LDFLAGS)
-
-client.o:  client.c client.h
-	$(CC) $(OCCLFLAGS) $(CFLAGS) $(CPATH) -c client.c
+get_client:  get_client.o utils.o
 
 clean:
-	$(RM) server client *.o
+	$(RM) get_server get_client *.o
 
 .PHONY:  o a clean

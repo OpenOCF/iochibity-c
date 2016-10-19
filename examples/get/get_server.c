@@ -1,22 +1,22 @@
-//******************************************************************
-//
-// Copyright 2016 NORC at the University of Chicago
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+/* ****************************************************************** */
+
+/*  Copyright 2016 NORC at the University of Chicago */
+
+/* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
+
+/*  Licensed under the Apache License, Version 2.0 (the "License"); */
+/*  you may not use this file except in compliance with the License. */
+/*  You may obtain a copy of the License at */
+
+/*       http://www.apache.org/licenses/LICENSE-2.0 */
+
+/*  Unless required by applicable law or agreed to in writing, software */
+/*  distributed under the License is distributed on an "AS IS" BASIS, */
+/*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. */
+/*  See the License for the specific language governing permissions and */
+/*  limitations under the License. */
+
+/* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
 
 #include <stdio.h>
 #include <string.h>
@@ -25,16 +25,27 @@
 #include <signal.h>
 #include <pthread.h>
 
+#include "platform_features.h"
 #include "logger.h"
 #include "payload_logging.h"
 
-#include "server.h"
+#ifdef WITH_SECURITY
+#include "pinoxmcommon.h"
+#endif
+
+#include "get_server.h"
 #include "temperature.h"
 #include "utils.h"
+
+#include "debug.h"		/* libcoap debugging */
+#include "tinydtls/debug.h"		/* for tinydtls debugging */
 
 #define TAG "GET server"
 
 pthread_t pt_work;
+
+/* static char CRED_FILE[] = "get.d/oic_svr_db_server_justworks.dat"; */
+static char CRED_FILE[] = "get.d/oic_svr_db_server.dat";
 
 /* Platform Descriptor: OCPlatformInfo
  * This structure describes the platform properties. All non-Null properties will be
@@ -135,6 +146,15 @@ void *troutine_work(void *arg)
     exit(0);
 }
 
+FILE* server_fopen(const char *path, const char *mode)
+{
+    OIC_LOG_V(DEBUG, TAG, "%s: ENTRY, path: %s", __func__, path);
+    (void)path;
+    OIC_LOG_V(DEBUG, TAG, "%s: fopening %s", __func__, CRED_FILE);
+    return fopen(CRED_FILE, mode);
+    /* return fopen(path, mode); */
+}
+
 static void PrintUsage()
 {
     printf("Usage : ocserver -o <0|1>\n");
@@ -176,20 +196,30 @@ int main(int argc, char* argv[])
 
     OCStackResult op_result;
 
+    /* optionally: set log level for 3rd-party libs */
+    coap_set_log_level(LOG_DEBUG);
+    dtls_set_log_level(DTLS_LOG_DEBUG);
+
+    printf("Initializing persistent storage manager\n");
+    // Initialize Persistent Storage for SVR database
+    OCPersistentStorage ps = {server_fopen, fread, fwrite, fclose, unlink};
+    OCRegisterPersistentStorageHandler(&ps);
+
+    printf("Calling OCInit\n");
     /* 1. initialize */
-    op_result = OCInit(NULL, 0, OC_CLIENT_SERVER);
+    op_result = OCInit(NULL, 0, OC_SERVER);
     if (op_result != OC_STACK_OK) {
         printf("OCStack init error\n");
         return 0;
     }
 
+    printf("Calling OCSetPlatformInfo\n");
     /* 2. register platform info */
     op_result = OCSetPlatformInfo(platform_info);
     if (op_result == OC_STACK_OK) {
         OIC_LOG(INFO, TAG, "Platform Registration succeeded\n");
 	OCPlatformInfo* pi;
 	if ( OCGetPlatformInfo(&pi) == OC_STACK_OK ) {
-	    OIC_LOG(INFO, TAG, "OCGetPlatformInfo success\n");
 	    print_platform_info(pi);
 	} else {
 	    OIC_LOG(ERROR, TAG, "OCGetPlatformInfo failure\n");
@@ -202,6 +232,7 @@ int main(int argc, char* argv[])
 
     /* 3. register default device info */
     OCResourcePayloadAddStringLL(&device_info.types, "oic.wk.d");
+    printf("Calling OCSetDeviceInfo\n");
     op_result = OCSetDeviceInfo(device_info);
     if (op_result != OC_STACK_OK) {
         printf("Device Registration failed!\n");

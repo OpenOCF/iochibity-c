@@ -1,4 +1,4 @@
-/* server.h */
+/* temperature.h */
 #ifndef TEMPERATURE_H_
 #define TEMPERATURE_H_
 
@@ -6,7 +6,7 @@
 #include "logger.h"
 #include "ocpayload.h"
 
-#include "server.h"
+#include "get_server.h"
 
 /* Temperature Instrument Resource */
 /* code to represent hw state and operations */

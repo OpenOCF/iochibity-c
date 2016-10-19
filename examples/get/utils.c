@@ -28,20 +28,29 @@
 
 void print_client_response_header(OCClientResponse* client_response)
 {
-    char* TAG = "OCClientResponse log";
-    OIC_LOG_V(INFO, TAG, "\taddr:      %s", client_response->devAddr.addr);
-    OIC_LOG_V(INFO, TAG, "\tport:      %d", client_response->devAddr.port);
-    OIC_LOG_V(INFO, TAG, "\turi:       %s", client_response->resourceUri);
-    OIC_LOG_V(INFO, TAG, "\tprotocol:  %d", client_response->connType);
-    OIC_LOG_V(INFO, TAG, "\tidentity:  %s", client_response->identity.id);
-    OIC_LOG_V(INFO, TAG, "\tstack res: %s", getResult(client_response->result));
-    OIC_LOG_V(INFO, TAG, "\tseq nbr:   %d", client_response->sequenceNumber);
-    OIC_LOG_V(INFO, TAG, "\tvendor opts: %d", client_response->numRcvdVendorSpecificHeaderOptions);
+      char* TAG = "GET client response hdr";
+      char* s = "\n\taddr:      %s\n"
+	"\tport:      %d\n"
+	"\turi:       %s\n"
+	"\tprotocol:  %d\n"
+	"\tidentity:  %s\n"
+	"\tstack res: %s\n"
+	"\tseq nbr:   %d\n"
+	"\tvendor opts: %d\n";
+    OIC_LOG_V(INFO, TAG, s,
+	      client_response->devAddr.addr,
+	      client_response->devAddr.port,
+	      client_response->resourceUri,
+	      client_response->connType,
+	      client_response->identity.id,
+	      getResult(client_response->result),
+	      client_response->sequenceNumber,
+	      client_response->numRcvdVendorSpecificHeaderOptions);
 }
 
 void print_platform_info(OCPlatformInfo* pi)
 {
-    char* TAG = "OCPlatformInfo Log";
+    char* TAG = "GET client platform:";
     OIC_LOG_V(INFO, TAG, "\tID:               %s", pi->platformID);
     OIC_LOG_V(INFO, TAG, "\tMfg name:         %s", pi->manufacturerName);
     OIC_LOG_V(INFO, TAG, "\tMfg URL:          %s", pi->manufacturerUrl);
@@ -123,4 +132,3 @@ void StripNewLineChar(char* str)
         }
     }
 }
-
