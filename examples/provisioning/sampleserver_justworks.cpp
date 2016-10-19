@@ -44,6 +44,8 @@
 #include "platform_features.h"
 #include "logger.h"
 
+/*GAR darwin*/
+#include "time.h"
 
 #define TAG "SAMPLE_JUSTWORKS"
 

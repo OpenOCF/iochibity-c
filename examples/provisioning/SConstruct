@@ -1,0 +1,116 @@
+# //******************************************************************
+# //
+# // Copyright 2015 Samsung Electronics All Rights Reserved.
+# //
+# //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# //
+# // Licensed under the Apache License, Version 2.0 (the "License");
+# // you may not use this file except in compliance with the License.
+# // You may obtain a copy of the License at
+# //
+# //      http://www.apache.org/licenses/LICENSE-2.0
+# //
+# // Unless required by applicable law or agreed to in writing, software
+# // distributed under the License is distributed on an "AS IS" BASIS,
+# // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# // See the License for the specific language governing permissions and
+# // limitations under the License.
+# //
+# //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+
+# Import('env')
+import os.path
+env = Environment(ENV = os.environ)
+
+target_os = env['ENV']['TARGET_OS']
+print "TARGET OS:", target_os
+
+src_dir = env['ENV']['IOTIVITY_HOME']
+print "SRC DIR:", src_dir
+
+build_sysroot = env['ENV']['BUILD_SYSROOT']
+print "SYSROOT", build_sysroot
+
+install_sysroot = env['ENV']['INSTALL_SYSROOT']
+print "SYSROOT", install_sysroot
+######################################################################
+# Build flags
+######################################################################
+env.AppendUnique(CPPPATH = [
+		src_dir + '/resource/c_common',
+		src_dir + '/resource/csdk/stack',
+		src_dir + '/resource/csdk/logger',
+		src_dir + '/resource/csdk/security',
+		src_dir + '/resource/csdk/security/ocsecurity',
+		src_dir + '/resource/csdk/provisioning',
+		src_dir + '/resource/csdk/provisioning/ownership_transfer',
+		src_dir + '/extlibs/tinydtls',
+		src_dir + '/resource/csdk/cjson',
+		src_dir + '/extlibs/base64',
+		src_dir + '/resource/csdk/connectivity/inc',
+		src_dir + '/resource/csdk/connectivity/common/inc',
+		src_dir + '/resource/csdk/connectivity/lib/libcoap-4.1.1',
+		src_dir + '/resource/csdk/connectivity/api'
+		])
+
+target_os = env.get('TARGET_OS')
+env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
+env.AppendUnique(CPPDEFINES = ['__WITH_DTLS__', 'HAVE_UNISTD_H'])
+
+if target_os not in ['windows']:
+	env.AppendUnique(CFLAGS = ['-std=c99'])
+	env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread', '-fpermissive'])
+	env.AppendUnique(LIBS = ['pthread'])
+
+if target_os not in ['msys_nt', 'windows']:
+	env.AppendUnique(LIBS = ['dl', 'm'])
+	env.ParseConfig('pkg-config --libs glib-2.0');
+	env.AppendUnique(LIBPATH = [build_sysroot + '/security'])
+	env.AppendUnique(LIBPATH = [build_sysroot + '/provisioning'])
+	env.AppendUnique(LIBPATH = [install_sysroot + '/lib'])
+else:
+	env.AppendUnique(LIBS = ['ws2_32', 'iphlpapi', 'advapi32', 'timer'])
+
+#env.PrependUnique(LIBS = ['ocpmapi','oc', 'oc_logger', 'ocsrm', 'octbstack', 'connectivity_abstraction', 'coap'])
+
+env.PrependUnique(LIBS = ['chibity', 'ocsrm', 'ocpmapi'])
+
+if env.get('SECURED') == '1':
+    env.AppendUnique(LIBS = ['tinydtls'])
+if env.get('DTLS_WITH_X509') == '1':
+	env.AppendUnique(LIBS = ['CKManager'])
+	env.AppendUnique(LIBS = ['asn1'])
+
+env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+if target_os == 'tizen':
+    env.AppendUnique(CPPDEFINES = ['__TIZEN__'])
+
+######################################################################
+# Source files and Targets
+######################################################################
+
+provisioningclient = env.Program('provisioningclient', 'provisioningclient.c')
+sampleserver_justworks = env.Program('sampleserver_justworks', 'sampleserver_justworks.cpp')
+sampleserver_randompin = env.Program('sampleserver_randompin', 'sampleserver_randompin.cpp')
+
+#sec_provisioning_src_dir = src_dir + '/resource/csdk/security/provisioning/sample/'
+sec_provisioning_src_dir = './provisioning.d/'
+
+#sec_provisioning_build_dir = env.get('BUILD_DIR') +'/resource/csdk/security/provisioning/sample/'
+sec_provisioning_build_dir = './'
+
+clientdat = env.Install(sec_provisioning_build_dir,
+                        sec_provisioning_src_dir + 'oic_svr_db_client.dat')
+justworksdat = env.Install(sec_provisioning_build_dir,
+                           sec_provisioning_src_dir + 'oic_svr_db_server_justworks.dat')
+randompindat = env.Install(sec_provisioning_build_dir,
+                           sec_provisioning_src_dir+ 'oic_svr_db_server_randompin.dat')
+randompin_with_emptyuuid_dat = env.Install(sec_provisioning_build_dir,
+                                           sec_provisioning_src_dir+ 'oic_svr_db_randompin_with_empty_deviceid.dat')
+
+Alias("samples", [provisioningclient, sampleserver_justworks, sampleserver_randompin, clientdat, justworksdat, randompindat, randompin_with_emptyuuid_dat])
+
+#env.AppendTarget('samples')
+

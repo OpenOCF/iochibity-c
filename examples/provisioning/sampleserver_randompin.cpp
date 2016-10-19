@@ -44,6 +44,9 @@
 #include "platform_features.h"
 #include "logger.h"
 
+/*GAR darwin*/
+#include "time.h"
+
 #define TAG "SAMPLE_RANDOMPIN"
 
 int gQuitFlag = 0;
