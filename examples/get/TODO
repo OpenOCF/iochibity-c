@@ -1,3 +1,5 @@
 
 Client UI: fix the "wait" stuff.  we do not know how many responses to
 expect for discovery multicasts.
+
+Logging:  currently the build assumes iochibity was built with LOGGING=1

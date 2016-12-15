@@ -20,6 +20,7 @@ OIC Spec p. 45
 | Read-Write | oic.if.rw       | RETRIEVE, UPDATE
 | Actuator   | oic.if.a        | CREATE,RETRIEVE, UPDATE
 | Sensor     | oic.if.s        | RETRIEVE
+|===
 
 == Service routines (a/k/a "handlers")
 

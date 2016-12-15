@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <signal.h>
+#include <unistd.h>
 #include <pthread.h>
 
 #include "platform_features.h"

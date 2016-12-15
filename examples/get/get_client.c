@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <signal.h>
+#include <unistd.h>
 #include <pthread.h>
 
 #include "ocstack.h"
@@ -42,7 +43,7 @@
 
 #define DEFAULT_CONTEXT_VALUE 0x99
 
-static char CRED_FILE[] = "get.d/oic_svr_db_client.dat";
+static char CRED_FILE[] = "data/oic_svr_db_client.dat";
 
 static int UnicastDiscovery = 0;
 
@@ -360,7 +361,8 @@ OCStackApplicationResult svc_platform_discovery_response(void* ctx,
 
     /* FIXME: this doesn't really work - we don't know how many responses to expect */
     waiting = 0;		/* tell ui thread we're done */
-    return (UnicastDiscovery) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION;
+    /* return (UnicastDiscovery) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION; */
+    return OC_STACK_DELETE_TRANSACTION;
 }
 
 OCStackApplicationResult svc_device_discovery_response(void* ctx,
@@ -390,7 +392,8 @@ OCStackApplicationResult svc_device_discovery_response(void* ctx,
     }
 
     waiting = 0;		/* tell ui thread we're done */
-    return (UnicastDiscovery) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION;
+    /* return (UnicastDiscovery) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION; */
+    return OC_STACK_DELETE_TRANSACTION;
 }
 
 OCStackApplicationResult svc_resource_discovery_response(void *ctx,
@@ -420,6 +423,7 @@ OCStackApplicationResult svc_resource_discovery_response(void *ctx,
     }
 
     waiting = 0;		/* tell ui thread we're done */
+    /* return (UnicastDiscovery) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION; */
     return OC_STACK_DELETE_TRANSACTION;
 }
 
@@ -470,6 +474,7 @@ OCStackApplicationResult svc_get_response(void* ctx,
         }
     }
     waiting = 0;		/* tell ui thread we're done */
+    /* return (UnicastDiscovery) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION; */
     return OC_STACK_DELETE_TRANSACTION;
 }
 
@@ -653,9 +658,10 @@ void *prompt_user(void * arg)
 	    printf("\nChoose an action:\n");
 	    printf("\t1) Platform discovery\n\t2) Device discovery\n\t3) Resource discovery\n");
 	    printf("\t4) List resources\n");
-	    printf("\t5) GET /a/temperature\n");
-	    printf("\t6) GET /oic/sec/doxm\n");
-	    printf("\t7) GET /oic/sec/pstat\n");
+	    printf("\t5) GET /a/led\n");
+	    printf("\t6) GET /a/temperature\n");
+	    printf("\t7) GET /oic/sec/doxm\n");
+	    printf("\t8) GET /oic/sec/pstat\n");
 	    printf("\tq) Quit\n");
 	    scanf("%s", (char*)&action);
 	    switch(*action) {
@@ -671,7 +677,7 @@ void *prompt_user(void * arg)
 	    case '4':
 		print_resource_list();
 		break;
-	    case '5':
+	    case '6':
 		get_resource(g_qos);
 		break;
 	    case '7':

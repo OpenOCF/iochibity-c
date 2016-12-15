@@ -8,10 +8,13 @@ Things:
 * etc.
 * Payload
 
-We also have Iotivity itself, let's call this the Supervisor (Iotivity
+We also have Iotivity itself, let's call this the OCF Supervisor (Iotivity
 calls this "the stack").
 
-Abbrevs:  rsvp = Resource SerVice Provider
+Abbrevs:
+
+* rsvp = Resource SerVice Provider
+* spqr = Service Provider Query Resource?
 
 Ops:
 
@@ -19,20 +22,20 @@ Ops:
 |===
 |Our name |C API name | where? |desc
 
-| init  | OCInit | both | must be called first
-| init1 | OCInit1 | both | same as init, different params
+| ocf_init  | OCInit | both | must be called first
+| ocf_init1 | OCInit1 | both | same as init, different params
 |       | OCStartMulticastServer | | start responding to multicast traffic
 |       |  OCStopMulticastServer | | stop responding multicast traffic. no effect on unicast response.
-| run  | OCProcess | both | called in main loop to run the stack
-| stop | OCStop | both | controlled shutdown of the stack
+| ocf_run  | OCProcess | both | called in main loop to run the stack
+| ocf_stop | OCStop | both | controlled shutdown of the stack
 
 | | OCSetRAInfo | ? | set Remote Access infor for XMPP client
 
-| | OCGetServerInstanceIDString | both |
+| ocf_id | OCGetServerInstanceIDString | both |
 
-| rqst_submit  | OCDoResource | client |
-| rqst_cancel  | OCCancel     | client |
-| rqst_respond | OCDoResponse | server | send response to request (sent by rsvp)
+| ocf_request  | OCDoResource | client | submit RESTful (CRUDN) request
+| ocf_cancel_rqst  | OCCancel     | client | cancel request (OBSERVE, DISCOVER, or PRESENCE only)
+| ocf_respond | OCDoResponse | server | respond to request (sent by rsvp)
 |===
 
 
@@ -72,19 +75,19 @@ Ops:
 
 | rmgr_register_rsvp   | OCCreateResource | server | Register a Resource Service Provider
 | rmgr_deregister_rsvp | OCDeleteResource    | both | deregister rsvp and delete its metadata
-| rmgr_get_rsvps_cnt   | OCGetNumberOfResources | server | nbr of resources (RSVPs) registered with supervisor
+| rmgr_rsvp_count   | OCGetNumberOfResources | server | nbr of resources (RSVPs) registered with supervisor
 | rmgr_get_rsvp        | OCGetResourceHandle    | server | get handle by index
-| rmgr_default_svc    |  OCSetDefaultDeviceEntityHandler | both | set svc routine for default rsvp (NOT device!)
+| rmgr_set_default_rsvp_svc_routine |  OCSetDefaultDeviceEntityHandler | both | set svc routine for default rsvp (NOT device!)
 
 | rsvp_uri     | OCGetResourceUri | server? | lookup rsvp by handle, return uri
 | rsvp_props   | OCGetResourceProperties | server | lookup rsvp by handle, return properties
 
 | rsvp_t_add   | OCBindResourceTypeToResource | server | add a type to an RSVP's metadata
-| rsvp_t_cnt   | OCGetNumberOfResourceTypes | server | lookup rsvp by handle, return count of its types
+| rsvp_t_count   | OCGetNumberOfResourceTypes | server | lookup rsvp by handle, return count of its types
 | rsvp_t_name  | OCGetResourceTypeName | server  | lookup rsvp by handle, return type name
 
 | rsvp_if_add    | OCBindResourceInterfaceToResource | server | add an interface to RSVP's metadata
-| rsvp_if_cnt    | OCGetNumberOfResourceInterfaces | server | lookup rsvp by handle, etc.
+| rsvp_if_count    | OCGetNumberOfResourceInterfaces | server | lookup rsvp by handle, etc.
 | rsvp_if_name   | OCGetResourceInterfaceName      | server | by handle
 | rsvp_if_methods| OCGetResourceInterfaceAllowedMethods | server |
 
@@ -110,8 +113,8 @@ Ops:
 |===
 |Our name |C API name | where? | desc
 
-| | OCStartPresence | |
-| | OCStopPresence | |
+| | OCStartPresence | | "advertising"
+| | OCStopPresence | | "advertising"
 
 | | OCRegisterPersistentStorageHandler | |
 
@@ -121,6 +124,15 @@ Ops:
 
 |===
 
+.Provisioning API (csdk/provisioning/provisioning_manager.h)
+|===
+|Our name |C API name | where? | desc
+
+| | OCInitPM | | initialize ProvisioningManager
+| | OCResetDevice | | 
+OCStackResult OCDiscoverUnownedDevices(unsigned short waittime, OCProvisionDev_t **ppList);
+etc.
+|===
 
 .Payload
 |===

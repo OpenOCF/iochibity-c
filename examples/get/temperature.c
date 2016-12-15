@@ -68,6 +68,13 @@ svc_temperature_retrieve_request (OCEntityHandlerRequest* oic_request,
         return OC_EH_ERROR;
     }
 
+    /*  ocresource.h: */
+    /* OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr, */
+    /*                     OCRepPayload** payload) */
+    OCResource* r = (OCResource*) oic_request->resource;
+    OCStackResult op_result = OC_STACK_OK;
+    op_result = BuildResponseRepresentation(r, &new_payload);
+
     OCRepPayloadSetUri(new_payload, RSC_URI_TEMPERATURE);
     OCRepPayloadSetPropInt(new_payload, "temp", 72);
 
